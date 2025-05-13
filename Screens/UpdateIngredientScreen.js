@@ -17,7 +17,9 @@ const UpdateIngredientScreen = ({ navigation, route }) => {
   const [unit, setUnit] = useState(ingredient.quantity.replace(/[0-9.]/g, ''));
 
   const handleUpdate = () => {
-    onUpdate(ingredient.id, `${quantity}${unit}`);
+   onUpdate(ingredient.id_ingedient, { quantity });
+
+
     navigation.goBack();
   };
 

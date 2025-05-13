@@ -16,50 +16,44 @@ import {
 import { Feather } from '@expo/vector-icons';
 import DraggableSidebar from '../components/DraggableSidebar';
 import { useSidebar } from '../context/SidebarContext';
+import PersonnelApi from '../api-personnel'; // adapte le chemin si nécessaire
+import { useEffect } from 'react';
 
 const StaffScreen = ({ navigation }) => {
   const { sidebarWidth } = useSidebar();
-  const [staffMembers, setStaffMembers] = useState([
-    { 
-      id: '1', 
-      firstName: 'John',
-      lastName: 'Doe',
-      age: 28,
-      jobTitle: 'Chef',
-      email: 'john.doe@gmail.com',
-      phone: '555-123-4567',
-      password: 'password123',
-      assignedTables: ['Table 1', 'Table 2', 'Table 3', 'Table 4'],
-    },
-    { 
-      id: '2', 
-      firstName: 'Jane',
-      lastName: 'Smith',
-      age: 25,
-      jobTitle: 'Waiter',
-      email: 'jane.smith@gmail.com',
-      phone: '555-987-6543',
-      password: 'password456',
-      assignedTables: ['Table 5', 'Table 6'],
-    },
-    { 
-      id: '3', 
-      firstName: 'Mike',
-      lastName: 'Johnson',
-      age: 32,
-      jobTitle: 'Manager',
-      email: 'mike.johnson@gmail.com',
-      phone: '555-456-7890',
-      password: 'password789',
-      assignedTables: [],
-    },
-  ]);
+
+
+useEffect(() => {
+  loadPersonnel();
+}, []);
+
+const loadPersonnel = async () => {
+  try {
+    const data = await PersonnelApi.getAllPersonnel();
+    setStaffMembers(data.map((p) => ({
+      id: p.id_personnel.toString(),
+      firstName: p.prenom_personnel,
+      lastName: p.nom_personnel,
+      age: p.Age_personnel,
+      jobTitle: p.personnel_type,
+      email: p.adress_mail_personnel,
+      phone: p.Num_tel_personnel,
+      password: p.mot_de_pass_personnel,
+      assignedTables: p.id_table_serveur ? [`Table ${p.id_table_serveur}`] : [],
+    })));
+  } catch (error) {
+    console.error("Erreur chargement personnels :", error.message);
+  }
+};
+
   
   const [searchQuery, setSearchQuery] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [showAddStaffModal, setShowAddStaffModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [staffMembers, setStaffMembers] = useState([]);
+
   
   // Available tables
   const [availableTables, setAvailableTables] = useState([
@@ -95,11 +89,20 @@ const StaffScreen = ({ navigation }) => {
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
-    setStaffMembers(staffMembers.filter(item => item.id !== selectedStaff.id));
-    setShowDeleteModal(false);
-    setSelectedStaff(null);
-  };
+const confirmDelete = async () => {
+  try {
+    await PersonnelApi.deletePersonnel(selectedStaff.id); // suppression via l'API
+    await loadPersonnel(); // recharge les données
+    setShowDeleteModal(false); // ferme le modal
+    setSelectedStaff(null); // réinitialise l’état
+
+    // ✅ Affiche un message de succès
+    Alert.alert("Succès", "Le personnel a été supprimé avec succès !");
+  } catch (error) {
+    Alert.alert("Erreur suppression", error.message);
+  }
+};
+
 
   const handleViewDetails = (item) => {
     setSelectedStaff(item);
@@ -116,44 +119,34 @@ const StaffScreen = ({ navigation }) => {
     }
   };
 
-  const addNewStaff = () => {
-    if (!newStaff.firstName || !newStaff.lastName || !newStaff.jobTitle || !newStaff.password) {
-      Alert.alert("Missing Information", "Please provide at least first name, last name, job title, and password");
-      return;
-    }
-    
-    const selectedTables = availableTables.filter(table => table.selected).map(table => table.name);
-    
-    const newMember = {
-      id: Date.now().toString(),
-      firstName: newStaff.firstName,
-      lastName: newStaff.lastName,
-      age: parseInt(newStaff.age) || 0,
-      jobTitle: newStaff.jobTitle,
-      email: newStaff.email,
-      phone: newStaff.phone,
-      password: newStaff.password,
-      assignedTables: selectedTables,
-    };
-    
-    setStaffMembers([...staffMembers, newMember]);
-    setShowAddStaffModal(false);
-    
-    // Reset form and selections
-    setNewStaff({
-      firstName: '',
-      lastName: '',
-      age: '',
-      jobTitle: '',
-      email: '',
-      phone: '',
-      password: '',
-      assignedTables: [],
+  const addNewStaff = async () => {
+  if (!newStaff.firstName || !newStaff.lastName || !newStaff.jobTitle || !newStaff.email || !newStaff.age || !newStaff.phone || !newStaff.password) {
+    Alert.alert("Missing Information", "Please fill in all fields to add a new staff member");
+    return;
+  }
+
+  try {
+    const added = await PersonnelApi.addPersonnel({
+      nom_personnel: newStaff.lastName,
+      prenom_personnel: newStaff.firstName,
+      adress_personnel: "non fourni",
+      adress_mail_personnel: newStaff.email,
+      Num_tel_personnel: newStaff.phone,
+      mot_de_pass_personnel: newStaff.password,
+      passwordConfirm: newStaff.password,
+      Age_personnel: parseInt(newStaff.age),
+      personnel_type: newStaff.jobTitle.toLowerCase(),
+      id_table_serveur: availableTables.find(t => t.selected)?.id || null
     });
-    
-    const resetTables = availableTables.map(table => ({...table, selected: false}));
-    setAvailableTables(resetTables);
-  };
+
+    await loadPersonnel();
+    setShowAddStaffModal(false);
+    setNewStaff({ firstName: '', lastName: '', jobTitle: '', email: '', age: '', phone: '', password: '' });
+  } catch (error) {
+    Alert.alert("Erreur ajout personnel", error.message);
+  }
+};
+
 
   const renderItem = ({ item }) => (
     <View style={styles.staffRow}>

@@ -59,6 +59,8 @@ const IngredientApi = {
     };
 
     console.log("🛠️ Data sent to update ingredient:", body);
+    console.log("➡️ Updating ID:", id);
+
 
     const response = await axios.patch(`${API_URL}/ingredient/${id}`, body);
     if (response.status === 200) {
