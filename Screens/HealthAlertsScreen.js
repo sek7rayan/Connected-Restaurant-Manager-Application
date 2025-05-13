@@ -1,5 +1,4 @@
-// screens/HealthAlertsScreen.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,32 +15,12 @@ import {
 import { Feather } from '@expo/vector-icons';
 import DraggableSidebar from '../components/DraggableSidebar';
 import { useSidebar } from '../context/SidebarContext';
+import Api_maladie from './Api_maladie';
 
 const HealthAlertsScreen = ({ navigation }) => {
   const { sidebarWidth } = useSidebar();
-  const [healthAlerts, setHealthAlerts] = useState([
-    { 
-      id: '1', 
-      name: 'Gluten Allergy', 
-      description: 'Allergy to gluten, a protein found.', 
-    },
-    { 
-      id: '2', 
-      name: 'Cheese', 
-      description: 'Allergy to gluten, a protein found.', 
-    },
-    { 
-      id: '3', 
-      name: 'Pasta', 
-      description: 'Allergy to gluten, a protein found.', 
-    },
-    { 
-      id: '4', 
-      name: 'Tomatoes', 
-      description: 'Allergy to gluten, a protein found.', 
-    },
-  ]);
-  
+
+  const [healthAlerts, setHealthAlerts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedAlert, setSelectedAlert] = useState(null);
@@ -51,49 +30,65 @@ const HealthAlertsScreen = ({ navigation }) => {
     description: '',
   });
 
+  useEffect(() => {
+    fetchMaladies();
+  }, []);
+
+  const fetchMaladies = async () => {
+    try {
+      const maladies = await Api_maladie.getMaladies();
+      setHealthAlerts(maladies);
+    } catch (error) {
+      console.error("Erreur lors du chargement des maladies :", error.message);
+    }
+  };
+
   const handleDelete = (item) => {
     setSelectedAlert(item);
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
-    setHealthAlerts(healthAlerts.filter(item => item.id !== selectedAlert.id));
-    setShowDeleteModal(false);
-    setSelectedAlert(null);
+  const confirmDelete = async () => {
+    try {
+      await Api_maladie.deleteMaladie(selectedAlert.id_maladie);
+      await fetchMaladies();
+      setShowDeleteModal(false);
+      setSelectedAlert(null);
+    } catch (error) {
+      Alert.alert("Erreur", "Suppression échouée.");
+    }
   };
 
-  const addNewAlert = () => {
+  const addNewAlert = async () => {
     if (!newAlert.name || !newAlert.description) {
-      Alert.alert("Missing Information", "Please provide both name and description for the health alert");
+      Alert.alert("Missing Information", "Veuillez fournir un nom et une description.");
       return;
     }
-    
-    const newItem = {
-      id: Date.now().toString(),
-      name: newAlert.name,
-      description: newAlert.description,
-    };
-    
-    setHealthAlerts([...healthAlerts, newItem]);
-    setShowAddAlertModal(false);
-    // Reset form
-    setNewAlert({
-      name: '',
-      description: '',
-    });
+
+    try {
+      await Api_maladie.addMaladie({
+        nom_maladie: newAlert.name,
+        desc_maladie: newAlert.description,
+      });
+      await fetchMaladies();
+      setShowAddAlertModal(false);
+      setNewAlert({ name: '', description: '' });
+    } catch (error) {
+      Alert.alert("Erreur", "Ajout échoué.");
+    }
   };
 
   const renderItem = ({ item }) => (
     <View style={styles.alertRow}>
       <View style={styles.nameContainer}>
-        <Text style={styles.nameText}>{item.name}</Text>
+        <Text style={styles.nameText}>{item.nom_maladie}</Text>
       </View>
       <View style={styles.descriptionContainer}>
-        <Text style={styles.descriptionText}>{item.description}</Text>
+        <Text style={styles.descriptionText}>{item.desc_maladie}</Text>
       </View>
       <View style={styles.actionContainer}>
-        <TouchableOpacity 
-          style={styles.deleteButton} 
+        <TouchableOpacity
+          style={styles.deleteButton}
           onPress={() => handleDelete(item)}
         >
           <Feather name="trash-2" size={20} color="#000" />
@@ -107,13 +102,12 @@ const HealthAlertsScreen = ({ navigation }) => {
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       <View style={styles.mainContainer}>
         <DraggableSidebar navigation={navigation} currentScreen="HealthAlerts" />
-        
-        {/* Main Content */}
-        <ScrollView 
+
+        <ScrollView
           style={[styles.contentContainer, { marginLeft: sidebarWidth }]}
           showsVerticalScrollIndicator={false}
         >
-          {/* Header */}
+          {/* En-tête */}
           <View style={styles.header}>
             <View style={styles.ownerInfo}>
               <Feather name="user" size={24} color="#0f172a" style={styles.ownerIcon} />
@@ -126,8 +120,8 @@ const HealthAlertsScreen = ({ navigation }) => {
               </View>
             </View>
           </View>
-          
-          {/* Search and Add */}
+
+          {/* Barre de recherche et bouton ajout */}
           <View style={styles.searchAddContainer}>
             <View style={styles.searchContainer}>
               <Feather name="search" size={20} color="#64748b" style={styles.searchIcon} />
@@ -138,7 +132,7 @@ const HealthAlertsScreen = ({ navigation }) => {
                 onChangeText={setSearchQuery}
               />
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.addButton}
               onPress={() => setShowAddAlertModal(true)}
             >
@@ -146,34 +140,28 @@ const HealthAlertsScreen = ({ navigation }) => {
               <Text style={styles.addButtonText}>Add health Alert</Text>
             </TouchableOpacity>
           </View>
-          
-          {/* Health Alerts Header */}
-          <View style={styles.alertsHeader}>
-            <Text style={styles.alertsTitle}>Health Alerts</Text>
-            <Text style={styles.alertsSubtitle}>Manage health conditions and associated menu items</Text>
-          </View>
-          
-          {/* Health Alerts Table */}
+
+          {/* Liste des maladies */}
           <View style={styles.tableContainer}>
             <View style={styles.tableHeader}>
               <Text style={[styles.columnHeader, { flex: 2 }]}>Name</Text>
               <Text style={[styles.columnHeader, { flex: 4 }]}>Description</Text>
               <Text style={[styles.columnHeader, { flex: 1 }]}>Actions</Text>
             </View>
-            
+
             <FlatList
-              data={healthAlerts.filter(item => 
-                item.name.toLowerCase().includes(searchQuery.toLowerCase())
+              data={healthAlerts.filter(item =>
+                item.nom_maladie.toLowerCase().includes(searchQuery.toLowerCase())
               )}
               renderItem={renderItem}
-              keyExtractor={item => item.id}
+              keyExtractor={item => item.id_maladie.toString()}
               scrollEnabled={false}
             />
           </View>
         </ScrollView>
       </View>
-      
-      {/* Delete Confirmation Modal */}
+
+      {/* Modal suppression */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -183,33 +171,33 @@ const HealthAlertsScreen = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.deleteModalContent}>
             <View style={styles.deleteModalHeader}>
-              <Text style={styles.deleteModalTitle}>Delete Health Condition</Text>
+              <Text style={styles.deleteModalTitle}>Supprimer la maladie</Text>
               <TouchableOpacity onPress={() => setShowDeleteModal(false)}>
                 <Feather name="x" size={28} color="#000" />
               </TouchableOpacity>
             </View>
             <Text style={styles.deleteModalMessage}>
-              Are you sure you want to delete {selectedAlert?.name}? This action cannot be undone.
+              Êtes-vous sûr de vouloir supprimer {selectedAlert?.nom_maladie} ?
             </Text>
             <View style={styles.deleteModalButtons}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.cancelButton}
                 onPress={() => setShowDeleteModal(false)}
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={styles.cancelButtonText}>Annuler</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.deleteButton}
                 onPress={confirmDelete}
               >
-                <Text style={styles.deleteButtonText}>Delete</Text>
+                <Text style={styles.deleteButtonText}>Supprimer</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-      
-      {/* Add Health Alert Modal */}
+
+      {/* Modal ajout */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -219,44 +207,44 @@ const HealthAlertsScreen = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.addAlertModalContent}>
             <View style={styles.addAlertHeader}>
-              <Text style={styles.addAlertTitle}>Add Health Alert</Text>
-              <Text style={styles.addAlertSubtitle}>Add a new health condition or allergy</Text>
+              <Text style={styles.addAlertTitle}>Ajouter une maladie</Text>
+              <Text style={styles.addAlertSubtitle}>Remplissez les détails ci-dessous</Text>
             </View>
-            
+
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Alert Name</Text>
+              <Text style={styles.label}>Nom</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter health alert name"
+                placeholder="Nom de la maladie"
                 value={newAlert.name}
-                onChangeText={(text) => setNewAlert({...newAlert, name: text})}
+                onChangeText={(text) => setNewAlert({ ...newAlert, name: text })}
               />
             </View>
-            
+
             <View style={styles.formGroup}>
               <Text style={styles.label}>Description</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
-                placeholder="Enter health alert description"
+                placeholder="Description"
                 multiline
                 numberOfLines={4}
                 value={newAlert.description}
-                onChangeText={(text) => setNewAlert({...newAlert, description: text})}
+                onChangeText={(text) => setNewAlert({ ...newAlert, description: text })}
               />
             </View>
-            
+
             <View style={styles.addAlertButtons}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.cancelButton}
                 onPress={() => setShowAddAlertModal(false)}
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={styles.cancelButtonText}>Annuler</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.addAlertButton}
                 onPress={addNewAlert}
               >
-                <Text style={styles.addAlertButtonText}>Add Alert</Text>
+                <Text style={styles.addAlertButtonText}>Ajouter</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -265,6 +253,7 @@ const HealthAlertsScreen = ({ navigation }) => {
     </SafeAreaView>
   );
 };
+  
 
 const styles = StyleSheet.create({
   container: {

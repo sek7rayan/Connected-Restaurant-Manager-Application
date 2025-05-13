@@ -53,27 +53,31 @@ const IngredientApi = {
   },
 
   updateIngredient: async (id, ingredientData) => {
-    try {
-      console.log("🛠️ Data sent to update ingredient:", ingredientData);
+  try {
+    const body = {
+      quantite: parseInt(ingredientData.quantity),
+    };
 
-      const response = await axios.patch(`${API_URL}/ingredient/${id}`, ingredientData);
-      if (response.status === 200) {
-        console.log("✅ Ingredient updated successfully:", response.data);
-        return response.data;
-      }
-    } catch (error) {
-      if (error.response) {
-        console.error("❌ Error (updateIngredient):", error.response.data.message || "Unknown error.");
-        throw new Error(error.response.data.message || "Unknown error.");
-      } else if (error.request) {
-        console.error("❌ No response from server (updateIngredient).");
-        throw new Error("No response from server");
-      } else {
-        console.error("❌ Request Error (updateIngredient):", error.message);
-        throw new Error("Request Error");
-      }
+    console.log("🛠️ Data sent to update ingredient:", body);
+
+    const response = await axios.patch(`${API_URL}/ingredient/${id}`, body);
+    if (response.status === 200) {
+      console.log("✅ Ingredient updated successfully:", response.data);
+      return response.data;
     }
-  },
+  } catch (error) {
+    if (error.response) {
+      console.error("❌ Error (updateIngredient):", error.response.data.message || "Unknown error.");
+      throw new Error(error.response.data.message || "Unknown error.");
+    } else if (error.request) {
+      console.error("❌ No response from server (updateIngredient).");
+      throw new Error("No response from server");
+    } else {
+      console.error("❌ Request Error (updateIngredient):", error.message);
+      throw new Error("Request Error");
+    }
+  }
+},
 
   deleteIngredient: async (id) => {
     try {
