@@ -51,11 +51,22 @@ const StockScreen = ({ navigation }) => {
   };
   
   const handleEdit = (item) => {
-    setSelectedIngredient(item);
-    setNewIngredient({ name: item.name, quantity: item.quantity });
-    setShowEditIngredientModal(true);
-  };
+  navigation.navigate('UpdateIngredient', {
+    ingredient: item,
+    onUpdate: async (id, data) => {
+      try {
+        await IngredientApi.updateIngredient(id, {
+          quantity: data.quantity.replace(/[^0-9]/g, ''),
+        });
+        fetchIngredients(); // rafraîchir la liste
+      } catch (error) {
+        Alert.alert('Error', error.message);
+      }
+    },
+  });
+};
 
+  
   const handleDelete = (item) => {
     setSelectedIngredient(item);
     setShowDeleteModal(true);
