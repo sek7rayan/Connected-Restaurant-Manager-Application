@@ -15,7 +15,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import DraggableSidebar from '../components/DraggableSidebar';
 import { useSidebar } from '../context/SidebarContext';
-import IngredientApi from '../api_ingredient'; // << Remplacé ici
+import IngredientApi from '../api/api_ingredient'; // << Remplacé ici
 
 const StockScreen = ({ navigation }) => {
   const { sidebarWidth } = useSidebar();
