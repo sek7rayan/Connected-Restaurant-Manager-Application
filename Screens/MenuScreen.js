@@ -98,13 +98,13 @@ const MenuScreen = ({ navigation }) => {
 
   const fetchIngredients = async () => {
     try {
-      const ingredients = await IngredientApi.getIngredients();
-      setIngredients(ingredients);
+      const res = await IngredientApi.getIngredients();
+      setIngredients(res.ingredients);
     } catch (error) {
       console.error('Error fetching ingredients:', error);
     }
   };
-
+console.log(ingredients);
   const fetchMaladies = async () => {
     try {
       const maladies = await Api_maladie.getMaladies();
@@ -113,11 +113,11 @@ const MenuScreen = ({ navigation }) => {
       console.error('Error fetching maladies:', error);
     }
   };
-
+console.log(maladies);
   const fetchPlatIngredients = async (id_plat) => {
     try {
       const response = await Api_plat.getIngredientsByPlatId(id_plat);
-      setPlatIngredients(response || []);
+      setPlatIngredients(response.data.ingredients || []);
     } catch (error) {
       console.error('Error fetching plat ingredients:', error);
     }
@@ -126,7 +126,8 @@ const MenuScreen = ({ navigation }) => {
   const fetchPlatMaladies = async (id_plat) => {
     try {
       const response = await Api_plat.getMaladiesByPlatId(id_plat);
-      setPlatMaladies(response || []);
+      console.log(response);
+      setPlatMaladies(response.data.maladies || []);
     } catch (error) {
       console.error('Error fetching plat maladies:', error);
     }
