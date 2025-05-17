@@ -1,4 +1,4 @@
-// components/DraggableSidebar.js
+
 import React, { useState } from 'react';
 import {
   View,
@@ -82,7 +82,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRightWidth: 1,
     borderRightColor: '#e2e8f0',
-    position: 'relative',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    zIndex: 100,
   },
   sidebarHeader: {
     padding: 16,
@@ -92,7 +95,7 @@ const styles = StyleSheet.create({
   sidebarTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#0f172a',
+    color: '#0 E f172a',
   },
   navContainer: {
     flex: 1,

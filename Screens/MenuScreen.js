@@ -103,6 +103,63 @@ const MenuScreen = ({ navigation }) => {
       healthAlerts: [],
       image: 'https://placeholder.svg?height=300&width=300&query=salad',
     },
+     { 
+      id: '5', 
+      name: 'Fresh Salad', 
+      category: 'Side', 
+      price: '1000da', 
+      rating: 4.0,
+      dateAdded: '4/13/2025',
+      description: 'Fresh garden salad with seasonal vegetables',
+      calories: 45,
+      orders: 30,
+      ingredients: [
+        { name: 'Tomatoes', quantity: '100g' },
+        { name: 'Lettuce', quantity: '150g' },
+        { name: 'Cucumber', quantity: '100g' },
+        { name: 'Olive Oil', quantity: '10ml' }
+      ],
+      healthAlerts: [],
+      image: 'https://placeholder.svg?height=300&width=300&query=salad',
+    },
+     { 
+      id: '6', 
+      name: 'Fresh Salad', 
+      category: 'Side', 
+      price: '1000da', 
+      rating: 4.0,
+      dateAdded: '4/13/2025',
+      description: 'Fresh garden salad with seasonal vegetables',
+      calories: 45,
+      orders: 30,
+      ingredients: [
+        { name: 'Tomatoes', quantity: '100g' },
+        { name: 'Lettuce', quantity: '150g' },
+        { name: 'Cucumber', quantity: '100g' },
+        { name: 'Olive Oil', quantity: '10ml' }
+      ],
+      healthAlerts: [],
+      image: 'https://placeholder.svg?height=300&width=300&query=salad',
+    },
+       { 
+      id: '6', 
+      name: 'Fresh Salad', 
+      category: 'Side', 
+      price: '1000da', 
+      rating: 4.0,
+      dateAdded: '4/13/2025',
+      description: 'Fresh garden salad with seasonal vegetables',
+      calories: 45,
+      orders: 30,
+      ingredients: [
+        { name: 'Tomatoes', quantity: '100g' },
+        { name: 'Lettuce', quantity: '150g' },
+        { name: 'Cucumber', quantity: '100g' },
+        { name: 'Olive Oil', quantity: '10ml' }
+      ],
+      healthAlerts: [],
+      image: 'https://placeholder.svg?height=300&width=300&query=salad',
+    },
   ]);
 
  const [searchQuery, setSearchQuery] = useState('');
@@ -311,7 +368,7 @@ const MenuScreen = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScrollView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       <View style={styles.mainContainer}>
         <DraggableSidebar navigation={navigation} currentScreen="Menu" />
@@ -809,7 +866,7 @@ const MenuScreen = ({ navigation }) => {
                    </View>
                  </Modal>
 
-    </SafeAreaView>
+    </ScrollView>
   );
 };
 
