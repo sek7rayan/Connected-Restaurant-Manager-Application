@@ -56,7 +56,7 @@ const MenuScreen = ({ navigation }) => {
   });
   
   const [selectedIngredients, setSelectedIngredients] = useState([]);
-  const [currentIngredient, setCurrentIngredient] = useState({ id_ingredient: '', quantite: '' });
+  const [currentIngredient, setCurrentIngredient] = useState({ id_ingedient: '', quantite: '' });
   const [showIngredientsDropdown, setShowIngredientsDropdown] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showHealthDropdown, setShowHealthDropdown] = useState(false);
@@ -71,8 +71,7 @@ const MenuScreen = ({ navigation }) => {
   const fetchPlats = async () => {
     try {
       const response = await Api_plat.getAllPlatsForGerant();
-      console.log(response);
-      if (response ) {
+      if (response) {
         const formattedPlats = response.data.plats.map(plat => ({
           id: plat.id_plat,
           name: plat.nom_plat,
@@ -99,25 +98,43 @@ const MenuScreen = ({ navigation }) => {
   const fetchIngredients = async () => {
     try {
       const res = await IngredientApi.getIngredients();
-      setIngredients(res.ingredients);
+      // Adjust to match expected API response format
+      const formattedIngredients = res.ingredients.map(ing => ({
+        id_ingedient: ing.id_ingedient,
+        nom_igredient: ing.nom_igredient,
+        quantite_ing: ing.quantité_ing
+      }));
+      setIngredients(formattedIngredients);
     } catch (error) {
       console.error('Error fetching ingredients:', error);
     }
   };
-console.log(ingredients);
+
   const fetchMaladies = async () => {
     try {
       const maladies = await Api_maladie.getMaladies();
-      setMaladies(maladies);
+      // Adjust to match expected API response format
+      const formattedMaladies = maladies.map(mal => ({
+        id_maladie: mal.id_maladie,
+        nom_maladie: mal.nom_maladie,
+        desc_maladie: mal.desc_maladie
+      }));
+      setMaladies(formattedMaladies);
     } catch (error) {
       console.error('Error fetching maladies:', error);
     }
   };
-console.log(maladies);
+
   const fetchPlatIngredients = async (id_plat) => {
     try {
       const response = await Api_plat.getIngredientsByPlatId(id_plat);
-      setPlatIngredients(response.data.ingredients || []);
+      // Adjust to match expected API response format
+      const formattedPlatIngredients = response.data.ingredients.map(ing => ({
+        id_ingedient: ing.id_ingedient,
+        nom_igredient: ing.nom_igredient,
+        quantite_in_plat: ing.quantité_ing
+      }));
+      setPlatIngredients(formattedPlatIngredients);
     } catch (error) {
       console.error('Error fetching plat ingredients:', error);
     }
@@ -126,8 +143,13 @@ console.log(maladies);
   const fetchPlatMaladies = async (id_plat) => {
     try {
       const response = await Api_plat.getMaladiesByPlatId(id_plat);
-      console.log(response);
-      setPlatMaladies(response.data.maladies || []);
+      // Adjust to match expected API response format
+      const formattedPlatMaladies = response.data.maladies.map(mal => ({
+        id_maladie: mal.id_maladie,
+        nom_maladie: mal.nom_maladie,
+        desc_maladie: mal.desc_maladie
+      }));
+      setPlatMaladies(formattedPlatMaladies);
     } catch (error) {
       console.error('Error fetching plat maladies:', error);
     }
@@ -205,19 +227,19 @@ console.log(maladies);
   };
 
   const addIngredient = () => {
-    if (!currentIngredient.id_ingredient || !currentIngredient.quantite) {
+    if (!currentIngredient.id_ingedient || !currentIngredient.quantite) {
       Alert.alert("Missing Information", "Please provide both ingredient and quantity");
       return;
     }
     
-    const selectedIngredient = ingredients.find(ing => ing.id_ingredient == currentIngredient.id_ingredient);
+    const selectedIngredient = ingredients.find(ing => ing.id_ingedient == currentIngredient.id_ingedient);
     
     setSelectedIngredients([...selectedIngredients, { 
-      id_ingredient: currentIngredient.id_ingredient,
-      nom: selectedIngredient.nom,
+      id_ingedient: currentIngredient.id_ingedient,
+      nom_igredient: selectedIngredient.nom_igredient,
       quantite: currentIngredient.quantite 
     }]);
-    setCurrentIngredient({ id_ingredient: '', quantite: '' });
+    setCurrentIngredient({ id_ingedient: '', quantite: '' });
   };
 
   const removeIngredient = (index) => {
@@ -252,7 +274,7 @@ console.log(maladies);
         categorie: newPlate.categorie,
         date: newPlate.date,
         ingredients: selectedIngredients.map(ing => ({
-          id_ingredient: parseInt(ing.id_ingredient),
+          id_ingedient: parseInt(ing.id_ingedient),
           quantite: parseInt(ing.quantite)
         })),
         maladies: newPlate.maladies.map(id => parseInt(id))
@@ -282,9 +304,9 @@ console.log(maladies);
     }
   };
 
-  const updatePlatIngredient = async (id_plat, id_ingredient, quantite) => {
+  const updatePlatIngredient = async (id_plat, id_ingedient, quantite) => {
     try {
-      await Api_plat.updateIngredientToPlat(id_plat, id_ingredient, quantite);
+      await Api_plat.updateIngredientToPlat(id_plat, id_ingedient, quantite);
       await fetchPlatIngredients(id_plat);
       Alert.alert('Success', 'Ingredient updated successfully');
     } catch (error) {
@@ -293,9 +315,9 @@ console.log(maladies);
     }
   };
 
-  const deletePlatIngredient = async (id_plat, id_ingredient) => {
+  const deletePlatIngredient = async (id_plat, id_ingedient) => {
     try {
-      await Api_plat.deleteIngredientFromPlat(id_plat, id_ingredient);
+      await Api_plat.deleteIngredientFromPlat(id_plat, id_ingedient);
       await fetchPlatIngredients(id_plat);
       Alert.alert('Success', 'Ingredient removed successfully');
     } catch (error) {
@@ -304,9 +326,9 @@ console.log(maladies);
     }
   };
 
-  const addPlatIngredient = async (id_plat, id_ingredient, quantite) => {
+  const addPlatIngredient = async (id_plat, id_ingedient, quantite) => {
     try {
-      await Api_plat.addIngredientToPlat(id_plat, id_ingredient, quantite);
+      await Api_plat.addIngredientToPlat(id_plat, id_ingedient, quantite);
       await fetchPlatIngredients(id_plat);
       Alert.alert('Success', 'Ingredient added successfully');
     } catch (error) {
@@ -437,6 +459,7 @@ console.log(maladies);
           </View>
           
           {/* Menu Table */}
+
           <View style={styles.tableContainer}>
             {!isMobile && (
               <View style={styles.tableHeader}>
@@ -454,7 +477,7 @@ console.log(maladies);
                 item.name.toLowerCase().includes(searchQuery.toLowerCase())
               )}
               renderItem={renderItem}
-              keyExtractor={item => item.id}
+              keyExtractor={item => item.id.toString()}
               style={{ maxHeight: '70vh' }}
               nestedScrollEnabled={true}
             />
@@ -516,45 +539,49 @@ console.log(maladies);
                   <View style={styles.detailsSection}>
                     <Text style={styles.detailsSectionTitle}>Ingredients</Text>
                     <View style={styles.ingredientsTags}>
-                      {platIngredients.map((ingredient, index) => (
-                        <View key={index} style={styles.ingredientTag}>
-                          <Text style={styles.ingredientTagText}>
-                            {ingredient.nom} ({ingredient.quantite_in_plat})
-                          </Text>
-                          <View style={styles.ingredientActions}>
-                            <TouchableOpacity 
-                              onPress={async () => {
-                                const newQuantity = await new Promise(resolve => {
-                                  Alert.alert(
-                                    'Update Quantity',
-                                    'Enter new quantity:',
-                                    [
-                                      { text: 'Cancel', style: 'cancel' },
-                                      {
-                                        text: 'OK',
-                                        onPress: () => {
-                                          const input = prompt('Enter new quantity', ingredient.quantite_in_plat);
-                                          resolve(input);
+                      {platIngredients.length > 0 ? (
+                        platIngredients.map((ingredient, index) => (
+                          <View key={index} style={styles.ingredientTag}>
+                            <Text style={styles.ingredientTagText}>
+                              {ingredient.nom_igredient} ({ingredient.quantite_in_plat})
+                            </Text>
+                            <View style={styles.ingredientActions}>
+                              <TouchableOpacity 
+                                onPress={async () => {
+                                  const newQuantity = await new Promise(resolve => {
+                                    Alert.alert(
+                                      'Update Quantity',
+                                      'Enter new quantity:',
+                                      [
+                                        { text: 'Cancel', style: 'cancel' },
+                                        {
+                                          text: 'OK',
+                                          onPress: () => {
+                                            const input = prompt('Enter new quantity', ingredient.quantite_in_plat);
+                                            resolve(input);
+                                          }
                                         }
-                                      }
-                                    ]
-                                  );
-                                });
-                                if (newQuantity && !isNaN(newQuantity)) {
-                                  updatePlatIngredient(selectedItem.id_plat, ingredient.id_ingredient, parseInt(newQuantity));
-                                }
-                              }}
-                            >
-                              <Feather name="edit" size={16} color="#000" />
-                            </TouchableOpacity>
-                            <TouchableOpacity 
-                              onPress={() => deletePlatIngredient(selectedItem.id_plat, ingredient.id_ingredient)}
-                            >
-                              <Feather name="trash-2" size={16} color="#dc2626" />
-                            </TouchableOpacity>
+                                      ]
+                                    );
+                                  });
+                                  if (newQuantity && !isNaN(newQuantity)) {
+                                    updatePlatIngredient(selectedItem.id_plat, ingredient.id_ingedient, parseInt(newQuantity));
+                                  }
+                                }}
+                              >
+                                <Feather name="edit" size={16} color="#000" />
+                              </TouchableOpacity>
+                              <TouchableOpacity 
+                                onPress={() => deletePlatIngredient(selectedItem.id_plat, ingredient.id_ingedient)}
+                              >
+                                <Feather name="trash-2" size={16} color="#dc2626" />
+                              </TouchableOpacity>
+                            </View>
                           </View>
-                        </View>
-                      ))}
+                        ))
+                      ) : (
+                        <Text style={styles.noAlertsText}>No ingredients</Text>
+                      )}
                     </View>
                     <View style={styles.addIngredientContainer}>
                       <View style={{ flex: 1, marginRight: 8 }}>
@@ -563,8 +590,8 @@ console.log(maladies);
                           onPress={() => setShowIngredientsDropdown(!showIngredientsDropdown)}
                         >
                           <Text>
-                            {currentIngredient.id_ingredient ? 
-                              ingredients.find(i => i.id_ingredient == currentIngredient.id_ingredient)?.nom || 'Select ingredient' : 
+                            {currentIngredient.id_ingedient ? 
+                              ingredients.find(i => i.id_ingedient == currentIngredient.id_ingedient)?.nom_igredient || 'Select ingredient' : 
                               'Select ingredient'}
                           </Text>
                           <Feather name="chevron-down" size={20} color="#000" />
@@ -577,14 +604,14 @@ console.log(maladies);
                                 key={index}
                                 style={styles.dropdownItem}
                                 onPress={() => {
-                                  setCurrentIngredient({...currentIngredient, id_ingredient: ingredient.id_ingredient});
+                                  setCurrentIngredient({...currentIngredient, id_ingedient: ingredient.id_ingedient});
                                   setShowIngredientsDropdown(false);
                                 }}
                               >
-                                {currentIngredient.id_ingredient == ingredient.id_ingredient && (
+                                {platIngredients.some(ing => ing.id_ingedient === ingredient.id_ingedient) && (
                                   <Feather name="check" size={16} color="#000" />
                                 )}
-                                <Text style={styles.dropdownItemText}>{ingredient.nom}</Text>
+                                <Text style={styles.dropdownItemText}>{ingredient.nom_igredient}</Text>
                               </TouchableOpacity>
                             ))}
                           </View>
@@ -600,13 +627,13 @@ console.log(maladies);
                       <TouchableOpacity 
                         style={styles.addIngredientButton}
                         onPress={() => {
-                          if (currentIngredient.id_ingredient && currentIngredient.quantite) {
+                          if (currentIngredient.id_ingedient && currentIngredient.quantite) {
                             addPlatIngredient(
                               selectedItem.id_plat, 
-                              parseInt(currentIngredient.id_ingredient), 
+                              parseInt(currentIngredient.id_ingedient), 
                               parseInt(currentIngredient.quantite)
                             );
-                            setCurrentIngredient({ id_ingredient: '', quantite: '' });
+                            setCurrentIngredient({ id_ingedient: '', quantite: '' });
                           } else {
                             Alert.alert('Missing Information', 'Please select an ingredient and enter a quantity');
                           }
@@ -880,8 +907,8 @@ console.log(maladies);
                       onPress={() => setShowIngredientsDropdown(!showIngredientsDropdown)}
                     >
                       <Text>
-                        {currentIngredient.id_ingredient ? 
-                          ingredients.find(i => i.id_ingredient == currentIngredient.id_ingredient)?.nom || 'Select ingredient' : 
+                        {currentIngredient.id_ingedient ? 
+                          ingredients.find(i => i.id_ingedient == currentIngredient.id_ingedient)?.nom_igredient || 'Select ingredient' : 
                           'Select ingredient'}
                       </Text>
                       <Feather name="chevron-down" size={20} color="#000" />
@@ -894,14 +921,14 @@ console.log(maladies);
                             key={index}
                             style={styles.dropdownItem}
                             onPress={() => {
-                              setCurrentIngredient({...currentIngredient, id_ingredient: ingredient.id_ingredient});
+                              setCurrentIngredient({...currentIngredient, id_ingedient: ingredient.id_ingedient});
                               setShowIngredientsDropdown(false);
                             }}
                           >
-                            {currentIngredient.id_ingredient == ingredient.id_ingredient && (
+                            {currentIngredient.id_ingedient == ingredient.id_ingedient && (
                               <Feather name="check" size={16} color="#000" />
                             )}
-                            <Text style={styles.dropdownItemText}>{ingredient.nom}</Text>
+                            <Text style={styles.dropdownItemText}>{ingredient.nom_igredient}</Text>
                           </TouchableOpacity>
                         ))}
                       </View>
@@ -933,7 +960,7 @@ console.log(maladies);
                     {selectedIngredients.map((ingredient, index) => (
                       <View key={index} style={styles.selectedIngredientRow}>
                         <Text style={styles.selectedIngredientText}>
-                          {ingredient.nom} ({ingredient.quantite})
+                          {ingredient.nom_igredient} ({ingredient.quantite})
                         </Text>
                         <TouchableOpacity
                           style={styles.removeIngredientButton}
