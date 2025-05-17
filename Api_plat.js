@@ -168,6 +168,43 @@ updateIngredientToPlat : async (id_plat, id_ingredient, quantite) => {
      
     }
   }
+},
+ getMaladiesByPlatId : async (id_plat) => {
+  try {
+   
+    const response = await axios.get(`/platmaladie/${id_plat}`);
+
+    if (response.status === 200) {
+      return response.data;
+    }
+  } catch (error) {
+    if (error.response) {
+      if (error.response.status === 404 && error.response.data === "No maladies found") {
+        throw new Error("Aucune maladie associée à ce plat.");
+      }
+   
+  }
 }
+ },
+ getIngredientsByPlatId : async (id_plat) => {
+  try {
+    const response = await axios.get(`/api/ingredient/plat/${id_plat}`);
+    if (response.status === 200) {
+      return response.data;
+    }
+  } catch (error) {
+    if (error.response) {
+      throw new Error(error.response.data?.message || "Erreur serveur");
+    } else if (error.request) {
+      throw new Error("Aucune réponse reçue du serveur");
+    } else {
+      throw new Error("Erreur lors de la requête : " + error.message);
+    }
+  }
 }
+
+}
+
+
+
 export default Api_maladie;
