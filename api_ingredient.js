@@ -42,12 +42,6 @@ const IngredientApi = {
       if (error.response) {
         console.error("❌ Error (addIngredient):", error.response.data.message || "Unknown error.");
         throw new Error(error.response.data.message || "Unknown error.");
-      } else if (error.request) {
-        console.error("❌ No response from server (addIngredient).");
-        throw new Error("No response from server");
-      } else {
-        console.error("❌ Request Error (addIngredient):", error.message);
-        throw new Error("Request Error");
       }
     }
   },
@@ -71,13 +65,7 @@ const IngredientApi = {
     if (error.response) {
       console.error("❌ Error (updateIngredient):", error.response.data.message || "Unknown error.");
       throw new Error(error.response.data.message || "Unknown error.");
-    } else if (error.request) {
-      console.error("❌ No response from server (updateIngredient).");
-      throw new Error("No response from server");
-    } else {
-      console.error("❌ Request Error (updateIngredient):", error.message);
-      throw new Error("Request Error");
-    }
+    } 
   }
 },
 
@@ -93,13 +81,8 @@ const IngredientApi = {
         if (error.response.status === 404) {
           console.error("❌ Error: Ingredient not found.");
           throw new Error("Ingredient not found.");
-        } else {
-          console.error("❌ Server Error (deleteIngredient):", error.response.data.message || "Unknown error.");
-          throw new Error(error.response.data.message || "Server Error");
-        }
-      } else {
-        console.error("❌ Network Error (deleteIngredient):", error.message);
-        throw new Error("Network Error");
+        } 
+      
       }
     }
   },

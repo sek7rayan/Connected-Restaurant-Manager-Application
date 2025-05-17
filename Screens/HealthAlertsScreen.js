@@ -15,7 +15,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import DraggableSidebar from '../components/DraggableSidebar';
 import { useSidebar } from '../context/SidebarContext';
-import Api_maladie from './Api_maladie';
+import Api_maladie from '../Api_maladie';
 
 const HealthAlertsScreen = ({ navigation }) => {
   const { sidebarWidth } = useSidebar();

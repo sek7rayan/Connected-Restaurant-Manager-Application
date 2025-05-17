@@ -13,16 +13,21 @@ import {
   Image,
   ScrollView,
   Alert,
+  Platform,
+  Dimensions
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import DraggableSidebar from '../components/DraggableSidebar';
 import { useSidebar } from '../context/SidebarContext';
 import * as ImagePicker from 'expo-image-picker';
 
+const { width } = Dimensions.get('window');
+const isMobile = width < 768;
+
 const MenuScreen = ({ navigation }) => {
   const { sidebarWidth } = useSidebar();
   const [menuItems, setMenuItems] = useState([
-    { 
+  { 
       id: '1', 
       name: 'Pizza', 
       category: 'Main', 
@@ -99,8 +104,8 @@ const MenuScreen = ({ navigation }) => {
       image: 'https://placeholder.svg?height=300&width=300&query=salad',
     },
   ]);
-  
-  const [searchQuery, setSearchQuery] = useState('');
+
+ const [searchQuery, setSearchQuery] = useState('');
   const [showDetails, setShowDetails] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -245,46 +250,63 @@ const MenuScreen = ({ navigation }) => {
   const ingredientOptions = ['Tomatoes', 'Onion', 'Pepper', 'Flour', 'Cheese', 'Olive Oil', 'Pasta', 'Lettuce'];
   const healthOptions = ['Contains sugar', 'Contains gluten', 'Contains dairy', 'Vegan', 'Vegetarian'];
 
+
   const renderItem = ({ item }) => (
     <TouchableOpacity 
-      style={styles.menuItemRow}
+      style={[styles.menuItemRow, isMobile && styles.mobileMenuItemRow]}
       onPress={() => handleViewDetails(item)}
     >
-      <View style={styles.itemInfo}>
-        <Text style={styles.itemName}>{item.name}</Text>
-      </View>
-      <View style={styles.categoryContainer}>
-        <Text style={styles.categoryText}>{item.category}</Text>
-      </View>
-      <View style={styles.priceContainer}>
-        <Text style={styles.priceText}>{item.price}</Text>
-      </View>
-      <View style={styles.ratingContainer}>
-        <Text style={styles.ratingText}>{item.rating ? item.rating.toFixed(1) : ''}</Text>
-      </View>
-      <View style={styles.dateContainer}>
-        <Text style={styles.dateText}>{item.dateAdded}</Text>
-      </View>
-      <View style={styles.actionButtons}>
-        <TouchableOpacity 
-          style={styles.actionButton} 
-          onPress={() => handleViewDetails(item)}
-        >
-          <Feather name="eye" size={20} color="#000" />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.actionButton} 
-          onPress={() => handleEdit(item)}
-        >
-          <Feather name="edit" size={20} color="#000" />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.actionButton} 
-          onPress={() => handleDelete(item)}
-        >
-          <Feather name="trash-2" size={20} color="#000" />
-        </TouchableOpacity>
-      </View>
+      {isMobile ? (
+        <>
+          <View style={styles.mobileItemHeader}>
+            <Text style={styles.itemName}>{item.name}</Text>
+            <Text style={styles.priceText}>{item.price}</Text>
+          </View>
+          <View style={styles.mobileItemFooter}>
+            <Text style={styles.categoryText}>{item.category}</Text>
+            <View style={styles.mobileActionButtons}>
+              <TouchableOpacity style={styles.actionButton} onPress={() => handleViewDetails(item)}>
+                <Feather name="eye" size={20} color="#000" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton} onPress={() => handleEdit(item)}>
+                <Feather name="edit" size={20} color="#000" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item)}>
+                <Feather name="trash-2" size={20} color="#000" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </>
+      ) : (
+        <>
+          <View style={styles.itemInfo}>
+            <Text style={styles.itemName}>{item.name}</Text>
+          </View>
+          <View style={styles.categoryContainer}>
+            <Text style={styles.categoryText}>{item.category}</Text>
+          </View>
+          <View style={styles.priceContainer}>
+            <Text style={styles.priceText}>{item.price}</Text>
+          </View>
+          <View style={styles.ratingContainer}>
+            <Text style={styles.ratingText}>{item.rating ? item.rating.toFixed(1) : ''}</Text>
+          </View>
+          <View style={styles.dateContainer}>
+            <Text style={styles.dateText}>{item.dateAdded}</Text>
+          </View>
+          <View style={styles.actionButtons}>
+            <TouchableOpacity style={styles.actionButton} onPress={() => handleViewDetails(item)}>
+              <Feather name="eye" size={20} color="#000" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton} onPress={() => handleEdit(item)}>
+              <Feather name="edit" size={20} color="#000" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item)}>
+              <Feather name="trash-2" size={20} color="#000" />
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
     </TouchableOpacity>
   );
 
@@ -295,496 +317,498 @@ const MenuScreen = ({ navigation }) => {
         <DraggableSidebar navigation={navigation} currentScreen="Menu" />
         
         {/* Main Content */}
-        <ScrollView 
-          style={[styles.contentContainer, { marginLeft: sidebarWidth }]}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.ownerInfo}>
-              <Feather name="user" size={24} color="#0f172a" style={styles.ownerIcon} />
-              <Text style={styles.ownerTitle}>Owner Dashboard</Text>
-            </View>
-            <View style={styles.adminContainer}>
-              <Text style={styles.adminText}>Admin</Text>
-              <View style={styles.adminIcon}>
-                <Feather name="user" size={20} color="#fff" />
+        <View style={[styles.contentContainer, { marginLeft: sidebarWidth }]}>
+          <ScrollView 
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={Platform.OS === 'web'}
+          >
+            {/* Header */}
+            <View style={styles.header}>
+              <View style={styles.ownerInfo}>
+                <Feather name="user" size={24} color="#0f172a" style={styles.ownerIcon} />
+                <Text style={styles.ownerTitle}>Owner Dashboard</Text>
+              </View>
+              <View style={styles.adminContainer}>
+                <Text style={styles.adminText}>Admin</Text>
+                <View style={styles.adminIcon}>
+                  <Feather name="user" size={20} color="#fff" />
+                </View>
               </View>
             </View>
-          </View>
-          
-          {/* Search and Add */}
-          <View style={styles.searchAddContainer}>
-            <View style={styles.searchContainer}>
-              <Feather name="search" size={20} color="#64748b" style={styles.searchIcon} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search Menu items..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
-            </View>
-            <TouchableOpacity 
-              style={styles.addButton}
-              onPress={() => setShowAddPlateModal(true)}
-            >
-              <Ionicons name="add" size={24} color="#fff" />
-              <Text style={styles.addButtonText}>Add Menu item</Text>
-            </TouchableOpacity>
-          </View>
-          
-          {/* Menu Header */}
-          <View style={styles.menuHeader}>
-            <Text style={styles.menuTitle}>Menu</Text>
-            <Text style={styles.menuSubtitle}>Manage your restaurant's Menu</Text>
-          </View>
-          
-          {/* Menu Table */}
-          <View style={styles.tableContainer}>
-            <View style={styles.tableHeader}>
-              <Text style={[styles.columnHeader, { flex: 2 }]}>Name</Text>
-              <Text style={[styles.columnHeader, { flex: 1.5 }]}>Category</Text>
-              <Text style={[styles.columnHeader, { flex: 1 }]}>Price</Text>
-              <Text style={[styles.columnHeader, { flex: 1 }]}>Rating</Text>
-              <Text style={[styles.columnHeader, { flex: 1.5 }]}>Date added</Text>
-              <Text style={[styles.columnHeader, { flex: 1.5 }]}>Actions</Text>
+            
+            {/* Search and Add */}
+            <View style={[styles.searchAddContainer, isMobile && styles.mobileSearchAddContainer]}>
+              <View style={styles.searchContainer}>
+                <Feather name="search" size={20} color="#64748b" style={styles.searchIcon} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search Menu items..."
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                />
+              </View>
+              <TouchableOpacity 
+                style={styles.addButton}
+                onPress={() => setShowAddPlateModal(true)}
+              >
+                <Ionicons name="add" size={24} color="#fff" />
+                {!isMobile && <Text style={styles.addButtonText}>Add Menu item</Text>}
+              </TouchableOpacity>
             </View>
             
-            <FlatList
-              data={menuItems.filter(item => 
-                item.name.toLowerCase().includes(searchQuery.toLowerCase())
+            {/* Menu Header */}
+            <View style={styles.menuHeader}>
+              <Text style={styles.menuTitle}>Menu</Text>
+              <Text style={styles.menuSubtitle}>Manage your restaurant's Menu</Text>
+            </View>
+            
+            {/* Menu Table */}
+            <View style={styles.tableContainer}>
+              {!isMobile && (
+                <View style={styles.tableHeader}>
+                  <Text style={[styles.columnHeader, { flex: 2 }]}>Name</Text>
+                  <Text style={[styles.columnHeader, { flex: 1.5 }]}>Category</Text>
+                  <Text style={[styles.columnHeader, { flex: 1 }]}>Price</Text>
+                  <Text style={[styles.columnHeader, { flex: 1 }]}>Rating</Text>
+                  <Text style={[styles.columnHeader, { flex: 1.5 }]}>Date added</Text>
+                  <Text style={[styles.columnHeader, { flex: 1.5 }]}>Actions</Text>
+                </View>
               )}
-              renderItem={renderItem}
-              keyExtractor={item => item.id}
-              scrollEnabled={false}
-            />
-          </View>
-        </ScrollView>
+              
+              <FlatList
+                data={menuItems.filter(item => 
+                  item.name.toLowerCase().includes(searchQuery.toLowerCase())
+                )}
+                renderItem={renderItem}
+                keyExtractor={item => item.id}
+                scrollEnabled={false}
+              />
+            </View>
+          </ScrollView>
+        </View>
       </View>
       
-      {/* View Details Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={showDetails}
-        onRequestClose={() => setShowDetails(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.detailsModalContent}>
-            <View style={styles.detailsHeader}>
-              <View>
-                <Text style={styles.detailsTitle}>{selectedItem?.name}</Text>
-                <Text style={styles.detailsSubtitle}>Menu item details</Text>
-              </View>
-              <TouchableOpacity onPress={() => setShowDetails(false)}>
-                <Feather name="x" size={28} color="#000" />
-              </TouchableOpacity>
-            </View>
-            
-            <ScrollView style={styles.detailsBody}>
-              <View style={styles.detailsRow}>
-                <View style={styles.detailsImageContainer}>
-                  <Image 
-                    source={{ uri: selectedItem?.image || 'https://placeholder.svg?height=300&width=300&query=food' }} 
-                    style={styles.detailsImage}
-                    resizeMode="cover"
-                  />
-                </View>
-                <View style={styles.detailsInfo}>
-                  <Text style={styles.detailsName}>{selectedItem?.name}</Text>
-                  <Text style={styles.detailsCategory}>{selectedItem?.category}</Text>
-                  
-                  <View style={styles.ratingsRow}>
-                    <Feather name="star" size={20} color="#ffc107" />
-                    <Text style={styles.ratingsText}>{selectedItem?.rating?.toFixed(1)} • {selectedItem?.calories} calories</Text>
-                  </View>
-                  <View style={styles.ordersRow}>
-                    <Feather name="users" size={16} color="#64748b" />
-                    <Text style={styles.ordersText}>{selectedItem?.orders} orders</Text>
-                  </View>
-                  
-                  <View style={styles.detailsSection}>
-                    <Text style={styles.detailsSectionTitle}>Price</Text>
-                    <Text style={styles.detailsPrice}>{selectedItem?.price}</Text>
-                  </View>
-                  
-                  <View style={styles.detailsSection}>
-                    <Text style={styles.detailsSectionTitle}>Description</Text>
-                    <Text style={styles.detailsDescription}>{selectedItem?.description}</Text>
-                  </View>
-                  
-                  <View style={styles.detailsSection}>
-                    <Text style={styles.detailsSectionTitle}>Ingredients</Text>
-                    <View style={styles.ingredientsTags}>
-                      {selectedItem?.ingredients.map((ingredient, index) => (
-                        <View key={index} style={styles.ingredientTag}>
-                          <Text style={styles.ingredientTagText}>
-                            {ingredient.name} ({ingredient.quantity})
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                  
-                  <View style={styles.detailsSection}>
-                    <Text style={styles.detailsSectionTitle}>Health Alerts</Text>
-                    <View style={styles.healthAlertsTags}>
-                      {selectedItem?.healthAlerts.length > 0 ? (
-                        selectedItem?.healthAlerts.map((alert, index) => (
-                          <View key={index} style={styles.healthAlertTag}>
-                            <Text style={styles.healthAlertTagText}>{alert}</Text>
-                          </View>
-                        ))
-                      ) : (
-                        <Text style={styles.noAlertsText}>No health alerts</Text>
-                      )}
-                    </View>
-                  </View>
-                  
-                  <View style={styles.detailsSection}>
-                    <Text style={styles.detailsSectionTitle}>Added on</Text>
-                    <Text style={styles.detailsDate}>{selectedItem?.dateAdded}</Text>
-                  </View>
-                </View>
-              </View>
-            </ScrollView>
-            
-            <TouchableOpacity 
-              style={styles.closeButton}
-              onPress={() => setShowDetails(false)}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-      
-      {/* Update Price Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={showUpdatePriceModal}
-        onRequestClose={() => setShowUpdatePriceModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Update Price</Text>
-              <Text style={styles.modalSubtitle}>Update the price for {selectedItem?.name}</Text>
-            </View>
-            
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Current Price</Text>
-              <TextInput
-                style={styles.input}
-                value={selectedItem?.price}
-                editable={false}
-              />
-            </View>
-            
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>New Price</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter new price"
-                keyboardType="numeric"
-                value={newPrice}
-                onChangeText={setNewPrice}
-              />
-              <Text style={styles.helperText}>Enter price without 'da' (e.g., 2500)</Text>
-            </View>
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={styles.cancelButton}
-                onPress={() => setShowUpdatePriceModal(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.updateButton}
-                onPress={updatePrice}
-              >
-                <Text style={styles.updateButtonText}>Update Price</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-      
-      {/* Delete Confirmation Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={showDeleteModal}
-        onRequestClose={() => setShowDeleteModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.deleteModalContent}>
-            <View style={styles.deleteModalHeader}>
-              <Text style={styles.deleteModalTitle}>Delete Plate</Text>
-              <TouchableOpacity onPress={() => setShowDeleteModal(false)}>
-                <Feather name="x" size={28} color="#000" />
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.deleteModalMessage}>
-              Are you sure you want to delete {selectedItem?.name}? This action cannot be undone.
-            </Text>
-            <View style={styles.deleteModalButtons}>
-              <TouchableOpacity 
-                style={styles.cancelButton}
-                onPress={() => setShowDeleteModal(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.deleteButton}
-                onPress={confirmDelete}
-              >
-                <Text style={styles.deleteButtonText}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-      
-      {/* Add Plate Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={showAddPlateModal}
-        onRequestClose={() => setShowAddPlateModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.addPlateModalContent}>
-            <ScrollView>
-              <View style={styles.addPlateHeader}>
-                <Text style={styles.addPlateTitle}>Add Plate</Text>
-                <Text style={styles.addPlateSubtitle}>Add a new plate into the Menu</Text>
-              </View>
-              
-              {/* Image Upload Section */}
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Plate Image</Text>
-                <View style={styles.imageUploadContainer}>
-                  {newPlate.image ? (
-                    <View style={styles.imagePreviewContainer}>
-                      <Image 
-                        source={{ uri: newPlate.image }} 
-                        style={styles.imagePreview} 
-                      />
-                      <TouchableOpacity 
-                        style={styles.changeImageButton}
-                        onPress={pickImage}
-                      >
-                        <Text style={styles.changeImageText}>Change Image</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <TouchableOpacity 
-                      style={styles.uploadButton}
-                      onPress={pickImage}
-                    >
-                      <Feather name="upload" size={24} color="#0f172a" />
-                      <Text style={styles.uploadButtonText}>Upload Image</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
-              
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Plate Name</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter plate name"
-                  value={newPlate.name}
-                  onChangeText={(text) => setNewPlate({...newPlate, name: text})}
-                />
-              </View>
-              
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Description</Text>
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Enter plate description"
-                  multiline
-                  numberOfLines={4}
-                  value={newPlate.description}
-                  onChangeText={(text) => setNewPlate({...newPlate, description: text})}
-                />
-              </View>
-              
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Price</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter price"
-                  keyboardType="numeric"
-                  value={newPlate.price}
-                  onChangeText={(text) => setNewPlate({...newPlate, price: text})}
-                />
-              </View>
-              
-              <View style={styles.formRow}>
-                <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
-                  <Text style={styles.label}>Calories</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter calories"
-                    keyboardType="numeric"
-                    value={newPlate.calories}
-                    onChangeText={(text) => setNewPlate({...newPlate, calories: text})}
-                  />
-                </View>
-                
-                <View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
-                  <Text style={styles.label}>Category</Text>
-                  <TouchableOpacity 
-                    style={styles.dropdownButton}
-                    onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                  >
-                    <Text>{newPlate.category}</Text>
-                    <Feather name="chevron-down" size={20} color="#000" />
-                  </TouchableOpacity>
-                  
-                  {showCategoryDropdown && (
-                    <View style={styles.dropdownMenu}>
-                      {categories.map((category, index) => (
-                        <TouchableOpacity
-                          key={index}
-                          style={styles.dropdownItem}
-                          onPress={() => {
-                            setNewPlate({...newPlate, category});
-                            setShowCategoryDropdown(false);
-                          }}
-                        >
-                          {category === newPlate.category && (
-                            <Feather name="check" size={16} color="#000" />
-                          )}
-                          <Text style={styles.dropdownItemText}>{category}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
-                </View>
-              </View>
-              
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Date</Text>
-                <TextInput
-                  style={styles.input}
-                  value={newPlate.date}
-                  onChangeText={(text) => setNewPlate({...newPlate, date: text})}
-                />
-              </View>
-              
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Add ingredients</Text>
-                
-                <View style={styles.ingredientInputContainer}>
-                  <View style={styles.ingredientNameInput}>
-                    <Text style={styles.smallLabel}>Ingredient</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Ingredient name"
-                      value={currentIngredient.name}
-                      onChangeText={(text) => setCurrentIngredient({...currentIngredient, name: text})}
-                    />
-                  </View>
-                  
-                  <View style={styles.ingredientQuantityInput}>
-                    <Text style={styles.smallLabel}>Quantity</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="e.g., 100g"
-                      value={currentIngredient.quantity}
-                      onChangeText={(text) => setCurrentIngredient({...currentIngredient, quantity: text})}
-                    />
-                  </View>
-                  
-                  <TouchableOpacity 
-                    style={styles.addIngredientButton}
-                    onPress={addIngredient}
-                  >
-                    <Feather name="plus" size={24} color="#fff" />
-                  </TouchableOpacity>
-                </View>
-                
-                {selectedIngredients.length > 0 && (
-                  <View style={styles.selectedIngredientsContainer}>
-                    <Text style={styles.smallLabel}>Selected Ingredients:</Text>
-                    {selectedIngredients.map((ingredient, index) => (
-                      <View key={index} style={styles.selectedIngredientRow}>
-                        <Text style={styles.selectedIngredientText}>
-                          {ingredient.name} ({ingredient.quantity})
-                        </Text>
-                        <TouchableOpacity
-                          style={styles.removeIngredientButton}
-                          onPress={() => removeIngredient(index)}
-                        >
-                          <Feather name="x" size={18} color="#dc2626" />
-                        </TouchableOpacity>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </View>
-              
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Add health alerts</Text>
-                <TouchableOpacity 
-                  style={styles.dropdownButton}
-                  onPress={() => setShowHealthDropdown(!showHealthDropdown)}
-                >
-                  <Text>Select health concerns</Text>
-                  <Feather name="chevron-down" size={20} color="#000" />
-                </TouchableOpacity>
-                
-                {showHealthDropdown && (
-                  <View style={styles.dropdownMenu}>
-                    {healthOptions.map((option, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        style={styles.dropdownItem}
-                        onPress={() => {
-                          const updatedAlerts = [...newPlate.healthAlerts];
-                          if (updatedAlerts.includes(option)) {
-                            const index = updatedAlerts.indexOf(option);
-                            updatedAlerts.splice(index, 1);
-                          } else {
-                            updatedAlerts.push(option);
-                          }
-                          setNewPlate({...newPlate, healthAlerts: updatedAlerts});
-                        }}
-                      >
-                        {newPlate.healthAlerts.includes(option) && (
-                          <Feather name="check" size={16} color="#000" />
-                        )}
-                        <Text style={styles.dropdownItemText}>{option}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
-              </View>
-              
-              <View style={styles.addPlateButtons}>
-                <TouchableOpacity 
-                  style={styles.cancelButton}
-                  onPress={() => setShowAddPlateModal(false)}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.addPlateButton}
-                  onPress={addNewPlate}
-                >
-                  <Text style={styles.addPlateButtonText}>Add plate</Text>
-                </TouchableOpacity>
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+       <Modal
+             animationType="fade"
+             transparent={true}
+             visible={showDetails}
+             onRequestClose={() => setShowDetails(false)}
+           >
+             <View style={styles.modalOverlay}>
+               <View style={styles.detailsModalContent}>
+                 <View style={styles.detailsHeader}>
+                   <View>
+                     <Text style={styles.detailsTitle}>{selectedItem?.name}</Text>
+                     <Text style={styles.detailsSubtitle}>Menu item details</Text>
+                   </View>
+                   <TouchableOpacity onPress={() => setShowDetails(false)}>
+                     <Feather name="x" size={28} color="#000" />
+                   </TouchableOpacity>
+                 </View>
+                 
+                 <ScrollView style={styles.detailsBody}>
+                   <View style={styles.detailsRow}>
+                     <View style={styles.detailsImageContainer}>
+                       <Image 
+                         source={{ uri: selectedItem?.image || 'https://placeholder.svg?height=300&width=300&query=food' }} 
+                         style={styles.detailsImage}
+                         resizeMode="cover"
+                       />
+                     </View>
+                     <View style={styles.detailsInfo}>
+                       <Text style={styles.detailsName}>{selectedItem?.name}</Text>
+                       <Text style={styles.detailsCategory}>{selectedItem?.category}</Text>
+                       
+                       <View style={styles.ratingsRow}>
+                         <Feather name="star" size={20} color="#ffc107" />
+                         <Text style={styles.ratingsText}>{selectedItem?.rating?.toFixed(1)} • {selectedItem?.calories} calories</Text>
+                       </View>
+                       <View style={styles.ordersRow}>
+                         <Feather name="users" size={16} color="#64748b" />
+                         <Text style={styles.ordersText}>{selectedItem?.orders} orders</Text>
+                       </View>
+                       
+                       <View style={styles.detailsSection}>
+                         <Text style={styles.detailsSectionTitle}>Price</Text>
+                         <Text style={styles.detailsPrice}>{selectedItem?.price}</Text>
+                       </View>
+                       
+                       <View style={styles.detailsSection}>
+                         <Text style={styles.detailsSectionTitle}>Description</Text>
+                         <Text style={styles.detailsDescription}>{selectedItem?.description}</Text>
+                       </View>
+                       
+                       <View style={styles.detailsSection}>
+                         <Text style={styles.detailsSectionTitle}>Ingredients</Text>
+                         <View style={styles.ingredientsTags}>
+                           {selectedItem?.ingredients.map((ingredient, index) => (
+                             <View key={index} style={styles.ingredientTag}>
+                               <Text style={styles.ingredientTagText}>
+                                 {ingredient.name} ({ingredient.quantity})
+                               </Text>
+                             </View>
+                           ))}
+                         </View>
+                       </View>
+                       
+                       <View style={styles.detailsSection}>
+                         <Text style={styles.detailsSectionTitle}>Health Alerts</Text>
+                         <View style={styles.healthAlertsTags}>
+                           {selectedItem?.healthAlerts.length > 0 ? (
+                             selectedItem?.healthAlerts.map((alert, index) => (
+                               <View key={index} style={styles.healthAlertTag}>
+                                 <Text style={styles.healthAlertTagText}>{alert}</Text>
+                               </View>
+                             ))
+                           ) : (
+                             <Text style={styles.noAlertsText}>No health alerts</Text>
+                           )}
+                         </View>
+                       </View>
+                       
+                       <View style={styles.detailsSection}>
+                         <Text style={styles.detailsSectionTitle}>Added on</Text>
+                         <Text style={styles.detailsDate}>{selectedItem?.dateAdded}</Text>
+                       </View>
+                     </View>
+                   </View>
+                 </ScrollView>
+                 
+                 <TouchableOpacity 
+                   style={styles.closeButton}
+                   onPress={() => setShowDetails(false)}
+                 >
+                   <Text style={styles.closeButtonText}>Close</Text>
+                 </TouchableOpacity>
+               </View>
+             </View>
+           </Modal>
+             <Modal
+                   animationType="slide"
+                   transparent={true}
+                   visible={showUpdatePriceModal}
+                   onRequestClose={() => setShowUpdatePriceModal(false)}
+                 >
+                   <View style={styles.modalOverlay}>
+                     <View style={styles.modalContent}>
+                       <View style={styles.modalHeader}>
+                         <Text style={styles.modalTitle}>Update Price</Text>
+                         <Text style={styles.modalSubtitle}>Update the price for {selectedItem?.name}</Text>
+                       </View>
+                       
+                       <View style={styles.formGroup}>
+                         <Text style={styles.label}>Current Price</Text>
+                         <TextInput
+                           style={styles.input}
+                           value={selectedItem?.price}
+                           editable={false}
+                         />
+                       </View>
+                       
+                       <View style={styles.formGroup}>
+                         <Text style={styles.label}>New Price</Text>
+                         <TextInput
+                           style={styles.input}
+                           placeholder="Enter new price"
+                           keyboardType="numeric"
+                           value={newPrice}
+                           onChangeText={setNewPrice}
+                         />
+                         <Text style={styles.helperText}>Enter price without 'da' (e.g., 2500)</Text>
+                       </View>
+                       
+                       <View style={styles.modalButtons}>
+                         <TouchableOpacity 
+                           style={styles.cancelButton}
+                           onPress={() => setShowUpdatePriceModal(false)}
+                         >
+                           <Text style={styles.cancelButtonText}>Cancel</Text>
+                         </TouchableOpacity>
+                         <TouchableOpacity 
+                           style={styles.updateButton}
+                           onPress={updatePrice}
+                         >
+                           <Text style={styles.updateButtonText}>Update Price</Text>
+                         </TouchableOpacity>
+                       </View>
+                     </View>
+                   </View>
+                 </Modal>
+                 
+                 {/* Delete Confirmation Modal */}
+                 <Modal
+                   animationType="fade"
+                   transparent={true}
+                   visible={showDeleteModal}
+                   onRequestClose={() => setShowDeleteModal(false)}
+                 >
+                   <View style={styles.modalOverlay}>
+                     <View style={styles.deleteModalContent}>
+                       <View style={styles.deleteModalHeader}>
+                         <Text style={styles.deleteModalTitle}>Delete Plate</Text>
+                         <TouchableOpacity onPress={() => setShowDeleteModal(false)}>
+                           <Feather name="x" size={28} color="#000" />
+                         </TouchableOpacity>
+                       </View>
+                       <Text style={styles.deleteModalMessage}>
+                         Are you sure you want to delete {selectedItem?.name}? This action cannot be undone.
+                       </Text>
+                       <View style={styles.deleteModalButtons}>
+                         <TouchableOpacity 
+                           style={styles.cancelButton}
+                           onPress={() => setShowDeleteModal(false)}
+                         >
+                           <Text style={styles.cancelButtonText}>Cancel</Text>
+                         </TouchableOpacity>
+                         <TouchableOpacity 
+                           style={styles.deleteButton}
+                           onPress={confirmDelete}
+                         >
+                           <Text style={styles.deleteButtonText}>Delete</Text>
+                         </TouchableOpacity>
+                       </View>
+                     </View>
+                   </View>
+                 </Modal>
+                 
+                 {/* Add Plate Modal */}
+                 <Modal
+                   animationType="slide"
+                   transparent={true}
+                   visible={showAddPlateModal}
+                   onRequestClose={() => setShowAddPlateModal(false)}
+                 >
+                   <View style={styles.modalOverlay}>
+                     <View style={styles.addPlateModalContent}>
+                       <ScrollView>
+                         <View style={styles.addPlateHeader}>
+                           <Text style={styles.addPlateTitle}>Add Plate</Text>
+                           <Text style={styles.addPlateSubtitle}>Add a new plate into the Menu</Text>
+                         </View>
+                         
+                         {/* Image Upload Section */}
+                         <View style={styles.formGroup}>
+                           <Text style={styles.label}>Plate Image</Text>
+                           <View style={styles.imageUploadContainer}>
+                             {newPlate.image ? (
+                               <View style={styles.imagePreviewContainer}>
+                                 <Image 
+                                   source={{ uri: newPlate.image }} 
+                                   style={styles.imagePreview} 
+                                 />
+                                 <TouchableOpacity 
+                                   style={styles.changeImageButton}
+                                   onPress={pickImage}
+                                 >
+                                   <Text style={styles.changeImageText}>Change Image</Text>
+                                 </TouchableOpacity>
+                               </View>
+                             ) : (
+                               <TouchableOpacity 
+                                 style={styles.uploadButton}
+                                 onPress={pickImage}
+                               >
+                                 <Feather name="upload" size={24} color="#0f172a" />
+                                 <Text style={styles.uploadButtonText}>Upload Image</Text>
+                               </TouchableOpacity>
+                             )}
+                           </View>
+                         </View>
+                         
+                         <View style={styles.formGroup}>
+                           <Text style={styles.label}>Plate Name</Text>
+                           <TextInput
+                             style={styles.input}
+                             placeholder="Enter plate name"
+                             value={newPlate.name}
+                             onChangeText={(text) => setNewPlate({...newPlate, name: text})}
+                           />
+                         </View>
+                         
+                         <View style={styles.formGroup}>
+                           <Text style={styles.label}>Description</Text>
+                           <TextInput
+                             style={[styles.input, styles.textArea]}
+                             placeholder="Enter plate description"
+                             multiline
+                             numberOfLines={4}
+                             value={newPlate.description}
+                             onChangeText={(text) => setNewPlate({...newPlate, description: text})}
+                           />
+                         </View>
+                         
+                         <View style={styles.formGroup}>
+                           <Text style={styles.label}>Price</Text>
+                           <TextInput
+                             style={styles.input}
+                             placeholder="Enter price"
+                             keyboardType="numeric"
+                             value={newPlate.price}
+                             onChangeText={(text) => setNewPlate({...newPlate, price: text})}
+                           />
+                         </View>
+                         
+                         <View style={styles.formRow}>
+                           <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                             <Text style={styles.label}>Calories</Text>
+                             <TextInput
+                               style={styles.input}
+                               placeholder="Enter calories"
+                               keyboardType="numeric"
+                               value={newPlate.calories}
+                               onChangeText={(text) => setNewPlate({...newPlate, calories: text})}
+                             />
+                           </View>
+                           
+                           <View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
+                             <Text style={styles.label}>Category</Text>
+                             <TouchableOpacity 
+                               style={styles.dropdownButton}
+                               onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                             >
+                               <Text>{newPlate.category}</Text>
+                               <Feather name="chevron-down" size={20} color="#000" />
+                             </TouchableOpacity>
+                             
+                             {showCategoryDropdown && (
+                               <View style={styles.dropdownMenu}>
+                                 {categories.map((category, index) => (
+                                   <TouchableOpacity
+                                     key={index}
+                                     style={styles.dropdownItem}
+                                     onPress={() => {
+                                       setNewPlate({...newPlate, category});
+                                       setShowCategoryDropdown(false);
+                                     }}
+                                   >
+                                     {category === newPlate.category && (
+                                       <Feather name="check" size={16} color="#000" />
+                                     )}
+                                     <Text style={styles.dropdownItemText}>{category}</Text>
+                                   </TouchableOpacity>
+                                 ))}
+                               </View>
+                             )}
+                           </View>
+                         </View>
+                         
+                         <View style={styles.formGroup}>
+                           <Text style={styles.label}>Date</Text>
+                           <TextInput
+                             style={styles.input}
+                             value={newPlate.date}
+                             onChangeText={(text) => setNewPlate({...newPlate, date: text})}
+                           />
+                         </View>
+                         
+                         <View style={styles.formGroup}>
+                           <Text style={styles.label}>Add ingredients</Text>
+                           
+                           <View style={styles.ingredientInputContainer}>
+                             <View style={styles.ingredientNameInput}>
+                               <Text style={styles.smallLabel}>Ingredient</Text>
+                               <TextInput
+                                 style={styles.input}
+                                 placeholder="Ingredient name"
+                                 value={currentIngredient.name}
+                                 onChangeText={(text) => setCurrentIngredient({...currentIngredient, name: text})}
+                               />
+                             </View>
+                             
+                             <View style={styles.ingredientQuantityInput}>
+                               <Text style={styles.smallLabel}>Quantity</Text>
+                               <TextInput
+                                 style={styles.input}
+                                 placeholder="e.g., 100g"
+                                 value={currentIngredient.quantity}
+                                 onChangeText={(text) => setCurrentIngredient({...currentIngredient, quantity: text})}
+                               />
+                             </View>
+                             
+                             <TouchableOpacity 
+                               style={styles.addIngredientButton}
+                               onPress={addIngredient}
+                             >
+                               <Feather name="plus" size={24} color="#fff" />
+                             </TouchableOpacity>
+                           </View>
+                           
+                           {selectedIngredients.length > 0 && (
+                             <View style={styles.selectedIngredientsContainer}>
+                               <Text style={styles.smallLabel}>Selected Ingredients:</Text>
+                               {selectedIngredients.map((ingredient, index) => (
+                                 <View key={index} style={styles.selectedIngredientRow}>
+                                   <Text style={styles.selectedIngredientText}>
+                                     {ingredient.name} ({ingredient.quantity})
+                                   </Text>
+                                   <TouchableOpacity
+                                     style={styles.removeIngredientButton}
+                                     onPress={() => removeIngredient(index)}
+                                   >
+                                     <Feather name="x" size={18} color="#dc2626" />
+                                   </TouchableOpacity>
+                                 </View>
+                               ))}
+                             </View>
+                           )}
+                         </View>
+                         
+                         <View style={styles.formGroup}>
+                           <Text style={styles.label}>Add health alerts</Text>
+                           <TouchableOpacity 
+                             style={styles.dropdownButton}
+                             onPress={() => setShowHealthDropdown(!showHealthDropdown)}
+                           >
+                             <Text>Select health concerns</Text>
+                             <Feather name="chevron-down" size={20} color="#000" />
+                           </TouchableOpacity>
+                           
+                           {showHealthDropdown && (
+                             <View style={styles.dropdownMenu}>
+                               {healthOptions.map((option, index) => (
+                                 <TouchableOpacity
+                                   key={index}
+                                   style={styles.dropdownItem}
+                                   onPress={() => {
+                                     const updatedAlerts = [...newPlate.healthAlerts];
+                                     if (updatedAlerts.includes(option)) {
+                                       const index = updatedAlerts.indexOf(option);
+                                       updatedAlerts.splice(index, 1);
+                                     } else {
+                                       updatedAlerts.push(option);
+                                     }
+                                     setNewPlate({...newPlate, healthAlerts: updatedAlerts});
+                                   }}
+                                 >
+                                   {newPlate.healthAlerts.includes(option) && (
+                                     <Feather name="check" size={16} color="#000" />
+                                   )}
+                                   <Text style={styles.dropdownItemText}>{option}</Text>
+                                 </TouchableOpacity>
+                               ))}
+                             </View>
+                           )}
+                         </View>
+                         
+                         <View style={styles.addPlateButtons}>
+                           <TouchableOpacity 
+                             style={styles.cancelButton}
+                             onPress={() => setShowAddPlateModal(false)}
+                           >
+                             <Text style={styles.cancelButtonText}>Cancel</Text>
+                           </TouchableOpacity>
+                           <TouchableOpacity 
+                             style={styles.addPlateButton}
+                             onPress={addNewPlate}
+                           >
+                             <Text style={styles.addPlateButtonText}>Add plate</Text>
+                           </TouchableOpacity>
+                         </View>
+                       </ScrollView>
+                     </View>
+                   </View>
+                 </Modal>
+
     </SafeAreaView>
   );
 };
@@ -800,9 +824,33 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    padding: 16,
+    padding: Platform.OS === 'web' ? 24 : 16,
   },
-  header: {
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: Platform.OS === 'web' ? 24 : 0,
+  },
+  mobileSearchAddContainer: {
+    flexDirection: 'column',
+  },
+  mobileMenuItemRow: {
+    flexDirection: 'column',
+    padding: 12,
+  },
+  mobileItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  mobileItemFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  mobileActionButtons: {
+    flexDirection: 'row',
+  },
+header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -1407,4 +1455,3 @@ const styles = StyleSheet.create({
 });
 
 export default MenuScreen;
-
