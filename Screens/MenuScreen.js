@@ -56,7 +56,7 @@ const MenuScreen = ({ navigation }) => {
   });
   
   const [selectedIngredients, setSelectedIngredients] = useState([]);
-  const [currentIngredient, setCurrentIngredient] = useState({ id_ingedient: '', quantite: '' });
+  const [currentIngredient, setCurrentIngredient] = useState({ id_ingredient: '', quantite: '' });
   const [showIngredientsDropdown, setShowIngredientsDropdown] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showHealthDropdown, setShowHealthDropdown] = useState(false);
@@ -68,7 +68,7 @@ const MenuScreen = ({ navigation }) => {
     fetchMaladies();
   }, []);
 
-  const fetchPlats = async () => {
+const fetchPlats = async () => {
     try {
       const response = await Api_plat.getAllPlatsForGerant();
       if (response) {
@@ -98,7 +98,7 @@ const MenuScreen = ({ navigation }) => {
   const fetchIngredients = async () => {
     try {
       const res = await IngredientApi.getIngredients();
-      // Adjust to match expected API response format
+
       const formattedIngredients = res.ingredients.map(ing => ({
         id_ingedient: ing.id_ingedient,
         nom_igredient: ing.nom_igredient,
@@ -113,7 +113,7 @@ const MenuScreen = ({ navigation }) => {
   const fetchMaladies = async () => {
     try {
       const maladies = await Api_maladie.getMaladies();
-      // Adjust to match expected API response format
+
       const formattedMaladies = maladies.map(mal => ({
         id_maladie: mal.id_maladie,
         nom_maladie: mal.nom_maladie,
@@ -126,32 +126,52 @@ const MenuScreen = ({ navigation }) => {
   };
 
   const fetchPlatIngredients = async (id_plat) => {
+
     try {
+      console.log('Fetching ingredients for plat ID:', id_plat);  
       const response = await Api_plat.getIngredientsByPlatId(id_plat);
-      // Adjust to match expected API response format
-      const formattedPlatIngredients = response.data.ingredients.map(ing => ({
-        id_ingedient: ing.id_ingedient,
-        nom_igredient: ing.nom_igredient,
-        quantite_in_plat: ing.quantité_ing
-      }));
-      setPlatIngredients(formattedPlatIngredients);
+      console.log(response);
+        const formattedPlatIngredients = response.data.ingredients.map(platIng => {
+          const ingredient = ingredients.find(ing => ing.id_ingredient === platIng.id_ingredient);
+          return {
+            id_ingredient: platIng.id_ingredient,
+            nom: ingredient ? ingredient.nom_igredient : 'Unknown Ingredient',
+            quantite_in_plat: platIng.quantite_in_plat || platIng.quantite
+          };
+        });
+        console.log('Formatted Plat Ingredients:', formattedPlatIngredients);
+        setPlatIngredients(formattedPlatIngredients);
+     
     } catch (error) {
-      console.error('Error fetching plat ingredients:', error);
+      console.error('Error fetching plat ingredients:', error.message);
+      setPlatIngredients([]);
     }
   };
 
   const fetchPlatMaladies = async (id_plat) => {
+    if (!id_plat) {
+      console.error('Invalid plat ID:', id_plat);
+      setPlatMaladies([]);
+      return;
+    }
     try {
       const response = await Api_plat.getMaladiesByPlatId(id_plat);
-      // Adjust to match expected API response format
-      const formattedPlatMaladies = response.data.maladies.map(mal => ({
-        id_maladie: mal.id_maladie,
-        nom_maladie: mal.nom_maladie,
-        desc_maladie: mal.desc_maladie
-      }));
-      setPlatMaladies(formattedPlatMaladies);
+      if (response && Array.isArray(response)) {
+        const formattedPlatMaladies = response.data.maladies(platMal => {
+          const maladie = maladies.find(mal => mal.id_maladie === platMal.id_maladie);
+          return {
+            id_maladie: platMal.id_maladie,
+            nom_maladie: maladie ? maladie.nom_maladie : 'Unknown Maladie',
+            desc_maladie: maladie ? maladie.desc_maladie : ''
+          };
+        });
+        setPlatMaladies(formattedPlatMaladies);
+      } else {
+        throw new Error('Invalid plat maladies response structure');
+      }
     } catch (error) {
-      console.error('Error fetching plat maladies:', error);
+      console.error('Error fetching plat maladies:', error.message);
+      setPlatMaladies([]);
     }
   };
 
@@ -163,8 +183,16 @@ const MenuScreen = ({ navigation }) => {
 
   const handleViewDetails = async (item) => {
     setSelectedItem(item);
-    await fetchPlatIngredients(item.id_plat);
-    await fetchPlatMaladies(item.id_plat);
+    if (item.id_plat) {
+      await Promise.all([
+        fetchPlatIngredients(item.id_plat),
+        fetchPlatMaladies(item.id_plat)
+      ]);
+    } else {
+      console.error('Invalid plat ID in item:', item);
+      setPlatIngredients([]);
+      setPlatMaladies([]);
+    }
     setShowDetails(true);
   };
 
@@ -181,7 +209,7 @@ const MenuScreen = ({ navigation }) => {
       setSelectedItem(null);
       Alert.alert('Success', 'Plate deleted successfully');
     } catch (error) {
-      console.error('Error deleting plate:', error);
+      console.error('Error deleting plate:', error.message);
       Alert.alert('Error', 'Failed to delete plate');
     }
   };
@@ -201,7 +229,7 @@ const MenuScreen = ({ navigation }) => {
       setSelectedItem(null);
       Alert.alert('Success', 'Price updated successfully');
     } catch (error) {
-      console.error('Error updating price:', error);
+      console.error('Error updating price:', error.message);
       Alert.alert('Error', 'Failed to update price');
     }
   };
@@ -227,19 +255,23 @@ const MenuScreen = ({ navigation }) => {
   };
 
   const addIngredient = () => {
-    if (!currentIngredient.id_ingedient || !currentIngredient.quantite) {
+    if (!currentIngredient.id_ingredient || !currentIngredient.quantite) {
       Alert.alert("Missing Information", "Please provide both ingredient and quantity");
       return;
     }
     
-    const selectedIngredient = ingredients.find(ing => ing.id_ingedient == currentIngredient.id_ingedient);
+    const selectedIngredient = ingredients.find(ing => ing.id_ingredient == currentIngredient.id_ingredient);
+    if (!selectedIngredient) {
+      Alert.alert("Error", "Selected ingredient not found");
+      return;
+    }
     
     setSelectedIngredients([...selectedIngredients, { 
-      id_ingedient: currentIngredient.id_ingedient,
-      nom_igredient: selectedIngredient.nom_igredient,
+      id_ingredient: currentIngredient.id_ingredient,
+      nom: selectedIngredient.nom,
       quantite: currentIngredient.quantite 
     }]);
-    setCurrentIngredient({ id_ingedient: '', quantite: '' });
+    setCurrentIngredient({ id_ingredient: '', quantite: '' });
   };
 
   const removeIngredient = (index) => {
@@ -274,7 +306,7 @@ const MenuScreen = ({ navigation }) => {
         categorie: newPlate.categorie,
         date: newPlate.date,
         ingredients: selectedIngredients.map(ing => ({
-          id_ingedient: parseInt(ing.id_ingedient),
+          id_ingredient: parseInt(ing.id_ingredient),
           quantite: parseInt(ing.quantite)
         })),
         maladies: newPlate.maladies.map(id => parseInt(id))
@@ -299,40 +331,52 @@ const MenuScreen = ({ navigation }) => {
       
       Alert.alert('Success', 'Plate added successfully');
     } catch (error) {
-      console.error('Error adding plate:', error);
+      console.error('Error adding plate:', error.message);
       Alert.alert('Error', error.message || 'Failed to add plate');
     }
   };
 
-  const updatePlatIngredient = async (id_plat, id_ingedient, quantite) => {
+  const updatePlatIngredient = async (id_plat, id_ingredient, quantite) => {
+    if (!id_plat || !id_ingredient || !quantite) {
+      Alert.alert('Error', 'Invalid plat ID, ingredient ID, or quantity');
+      return;
+    }
     try {
-      await Api_plat.updateIngredientToPlat(id_plat, id_ingedient, quantite);
+      await Api_plat.updateIngredientToPlat(id_plat, id_ingredient, quantite);
       await fetchPlatIngredients(id_plat);
       Alert.alert('Success', 'Ingredient updated successfully');
     } catch (error) {
-      console.error('Error updating ingredient:', error);
+      console.error('Error updating ingredient:', error.message);
       Alert.alert('Error', 'Failed to update ingredient');
     }
   };
 
-  const deletePlatIngredient = async (id_plat, id_ingedient) => {
+  const deletePlatIngredient = async (id_plat, id_ingredient) => {
+    if (!id_plat || !id_ingredient) {
+      Alert.alert('Error', 'Invalid plat ID or ingredient ID');
+      return;
+    }
     try {
-      await Api_plat.deleteIngredientFromPlat(id_plat, id_ingedient);
+      await Api_plat.deleteIngredientFromPlat(id_plat, id_ingredient);
       await fetchPlatIngredients(id_plat);
       Alert.alert('Success', 'Ingredient removed successfully');
     } catch (error) {
-      console.error('Error removing ingredient:', error);
+      console.error('Error removing ingredient:', error.message);
       Alert.alert('Error', 'Failed to remove ingredient');
     }
   };
 
-  const addPlatIngredient = async (id_plat, id_ingedient, quantite) => {
+  const addPlatIngredient = async (id_plat, id_ingredient, quantite) => {
+    if (!id_plat || !id_ingredient || !quantite) {
+      Alert.alert('Error', 'Invalid plat ID, ingredient ID, or quantity');
+      return;
+    }
     try {
-      await Api_plat.addIngredientToPlat(id_plat, id_ingedient, quantite);
+      await Api_plat.addIngredientToPlat(id_plat, id_ingredient, quantite);
       await fetchPlatIngredients(id_plat);
       Alert.alert('Success', 'Ingredient added successfully');
     } catch (error) {
-      console.error('Error adding ingredient:', error);
+      console.error('Error adding ingredient:', error.message);
       Alert.alert('Error', 'Failed to add ingredient');
     }
   };
@@ -416,7 +460,7 @@ const MenuScreen = ({ navigation }) => {
         <ScrollView 
           style={[styles.contentContainer, { marginLeft: sidebarWidth }]}
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={true}
+          showsVerticalScrollIndicator={Platform.OS === 'web'}
         >
           {/* Header */}
           <View style={styles.header}>
@@ -459,7 +503,6 @@ const MenuScreen = ({ navigation }) => {
           </View>
           
           {/* Menu Table */}
-
           <View style={styles.tableContainer}>
             {!isMobile && (
               <View style={styles.tableHeader}>
@@ -477,7 +520,7 @@ const MenuScreen = ({ navigation }) => {
                 item.name.toLowerCase().includes(searchQuery.toLowerCase())
               )}
               renderItem={renderItem}
-              keyExtractor={item => item.id.toString()}
+              keyExtractor={item => item.id}
               style={{ maxHeight: '70vh' }}
               nestedScrollEnabled={true}
             />
@@ -543,7 +586,7 @@ const MenuScreen = ({ navigation }) => {
                         platIngredients.map((ingredient, index) => (
                           <View key={index} style={styles.ingredientTag}>
                             <Text style={styles.ingredientTagText}>
-                              {ingredient.nom_igredient} ({ingredient.quantite_in_plat})
+                              {ingredient.nom} ({ingredient.quantite_in_plat})
                             </Text>
                             <View style={styles.ingredientActions}>
                               <TouchableOpacity 
@@ -565,14 +608,14 @@ const MenuScreen = ({ navigation }) => {
                                     );
                                   });
                                   if (newQuantity && !isNaN(newQuantity)) {
-                                    updatePlatIngredient(selectedItem.id_plat, ingredient.id_ingedient, parseInt(newQuantity));
+                                    updatePlatIngredient(selectedItem.id_plat, ingredient.id_ingredient, parseInt(newQuantity));
                                   }
                                 }}
                               >
                                 <Feather name="edit" size={16} color="#000" />
                               </TouchableOpacity>
                               <TouchableOpacity 
-                                onPress={() => deletePlatIngredient(selectedItem.id_plat, ingredient.id_ingedient)}
+                                onPress={() => deletePlatIngredient(selectedItem.id_plat, ingredient.id_ingredient)}
                               >
                                 <Feather name="trash-2" size={16} color="#dc2626" />
                               </TouchableOpacity>
@@ -590,8 +633,8 @@ const MenuScreen = ({ navigation }) => {
                           onPress={() => setShowIngredientsDropdown(!showIngredientsDropdown)}
                         >
                           <Text>
-                            {currentIngredient.id_ingedient ? 
-                              ingredients.find(i => i.id_ingedient == currentIngredient.id_ingedient)?.nom_igredient || 'Select ingredient' : 
+                            {currentIngredient.id_ingredient ? 
+                              ingredients.find(i => i.id_ingredient == currentIngredient.id_ingredient)?.nom || 'Select ingredient' : 
                               'Select ingredient'}
                           </Text>
                           <Feather name="chevron-down" size={20} color="#000" />
@@ -604,14 +647,14 @@ const MenuScreen = ({ navigation }) => {
                                 key={index}
                                 style={styles.dropdownItem}
                                 onPress={() => {
-                                  setCurrentIngredient({...currentIngredient, id_ingedient: ingredient.id_ingedient});
+                                  setCurrentIngredient({...currentIngredient, id_ingredient: ingredient.id_ingredient});
                                   setShowIngredientsDropdown(false);
                                 }}
                               >
-                                {platIngredients.some(ing => ing.id_ingedient === ingredient.id_ingedient) && (
+                                {platIngredients.some(ing => ing.id_ingredient === ingredient.id_ingredient) && (
                                   <Feather name="check" size={16} color="#000" />
                                 )}
-                                <Text style={styles.dropdownItemText}>{ingredient.nom_igredient}</Text>
+                                <Text style={styles.dropdownItemText}>{ingredient.nom}</Text>
                               </TouchableOpacity>
                             ))}
                           </View>
@@ -627,13 +670,13 @@ const MenuScreen = ({ navigation }) => {
                       <TouchableOpacity 
                         style={styles.addIngredientButton}
                         onPress={() => {
-                          if (currentIngredient.id_ingedient && currentIngredient.quantite) {
+                          if (currentIngredient.id_ingredient && currentIngredient.quantite) {
                             addPlatIngredient(
                               selectedItem.id_plat, 
-                              parseInt(currentIngredient.id_ingedient), 
+                              parseInt(currentIngredient.id_ingredient), 
                               parseInt(currentIngredient.quantite)
                             );
-                            setCurrentIngredient({ id_ingedient: '', quantite: '' });
+                            setCurrentIngredient({ id_ingredient: '', quantite: '' });
                           } else {
                             Alert.alert('Missing Information', 'Please select an ingredient and enter a quantity');
                           }
@@ -907,8 +950,8 @@ const MenuScreen = ({ navigation }) => {
                       onPress={() => setShowIngredientsDropdown(!showIngredientsDropdown)}
                     >
                       <Text>
-                        {currentIngredient.id_ingedient ? 
-                          ingredients.find(i => i.id_ingedient == currentIngredient.id_ingedient)?.nom_igredient || 'Select ingredient' : 
+                        {currentIngredient.id_ingredient ? 
+                          ingredients.find(i => i.id_ingredient == currentIngredient.id_ingredient)?.nom || 'Select ingredient' : 
                           'Select ingredient'}
                       </Text>
                       <Feather name="chevron-down" size={20} color="#000" />
@@ -921,14 +964,14 @@ const MenuScreen = ({ navigation }) => {
                             key={index}
                             style={styles.dropdownItem}
                             onPress={() => {
-                              setCurrentIngredient({...currentIngredient, id_ingedient: ingredient.id_ingedient});
+                              setCurrentIngredient({...currentIngredient, id_ingredient: ingredient.id_ingredient});
                               setShowIngredientsDropdown(false);
                             }}
                           >
-                            {currentIngredient.id_ingedient == ingredient.id_ingedient && (
+                            {currentIngredient.id_ingredient == ingredient.id_ingredient && (
                               <Feather name="check" size={16} color="#000" />
                             )}
-                            <Text style={styles.dropdownItemText}>{ingredient.nom_igredient}</Text>
+                            <Text style={styles.dropdownItemText}>{ingredient.nom}</Text>
                           </TouchableOpacity>
                         ))}
                       </View>
@@ -960,7 +1003,7 @@ const MenuScreen = ({ navigation }) => {
                     {selectedIngredients.map((ingredient, index) => (
                       <View key={index} style={styles.selectedIngredientRow}>
                         <Text style={styles.selectedIngredientText}>
-                          {ingredient.nom_igredient} ({ingredient.quantite})
+                          {ingredient.nom} ({ingredient.quantite})
                         </Text>
                         <TouchableOpacity
                           style={styles.removeIngredientButton}
@@ -1071,7 +1114,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-   mobileActionButtons: {
+  mobileActionButtons: {
     flexDirection: 'row',
   },
   header: {

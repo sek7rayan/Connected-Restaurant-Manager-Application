@@ -172,7 +172,7 @@ updateIngredientToPlat : async (id_plat, id_ingredient, quantite) => {
  getMaladiesByPlatId : async (id_plat) => {
   try {
    
-    const response = await axios.get(`/platmaladie/${id_plat}`);
+    const response = await axios.get(`${API_URL}/platmaladie/${id_plat}`);
 
     if (response.status === 200) {
       return response.data;
@@ -188,7 +188,7 @@ updateIngredientToPlat : async (id_plat, id_ingredient, quantite) => {
  },
  getIngredientsByPlatId : async (id_plat) => {
   try {
-    const response = await axios.get(`/api/ingredient/plat/${id_plat}`);
+    const response = await axios.get(`${API_URL}/ingredient/plat/${id_plat}`);
     if (response.status === 200) {
       return response.data;
     }
