@@ -100,7 +100,7 @@ const fetchPlats = async () => {
       const res = await IngredientApi.getIngredients();
 
       const formattedIngredients = res.ingredients.map(ing => ({
-        id_ingedient: ing.id_ingedient,
+        id_ingredient: ing.id_ingedient,
         nom_igredient: ing.nom_igredient,
         quantite_ing: ing.quantité_ing
       }));
@@ -130,13 +130,14 @@ const fetchPlats = async () => {
     try {
       console.log('Fetching ingredients for plat ID:', id_plat);  
       const response = await Api_plat.getIngredientsByPlatId(id_plat);
-      console.log(response);
+      console.log('Plat Ingredients Response:', response);
+      console.log('Ingredients:', ingredients);
         const formattedPlatIngredients = response.data.ingredients.map(platIng => {
           const ingredient = ingredients.find(ing => ing.id_ingredient === platIng.id_ingredient);
           return {
             id_ingredient: platIng.id_ingredient,
             nom: ingredient ? ingredient.nom_igredient : 'Unknown Ingredient',
-            quantite_in_plat: platIng.quantite_in_plat || platIng.quantite
+            quantite_in_plat: platIng.quantité_in_plat,
           };
         });
         console.log('Formatted Plat Ingredients:', formattedPlatIngredients);
@@ -951,7 +952,7 @@ const fetchPlats = async () => {
                     >
                       <Text>
                         {currentIngredient.id_ingredient ? 
-                          ingredients.find(i => i.id_ingredient == currentIngredient.id_ingredient)?.nom || 'Select ingredient' : 
+                          ingredients.find(i => i.id_ingredient == currentIngredient.id_ingredient)?.nom_igredient || 'Select ingredient' : 
                           'Select ingredient'}
                       </Text>
                       <Feather name="chevron-down" size={20} color="#000" />
@@ -971,7 +972,7 @@ const fetchPlats = async () => {
                             {currentIngredient.id_ingredient == ingredient.id_ingredient && (
                               <Feather name="check" size={16} color="#000" />
                             )}
-                            <Text style={styles.dropdownItemText}>{ingredient.nom}</Text>
+                            <Text style={styles.dropdownItemText}>{ingredient.nom_igredient}</Text>
                           </TouchableOpacity>
                         ))}
                       </View>
