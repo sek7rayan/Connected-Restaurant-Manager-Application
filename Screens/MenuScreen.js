@@ -115,14 +115,15 @@ const MenuScreen = ({ navigation }) => {
     }
   }
 
-  // Remplacez la fonction fetchPlatsDirectly par cette version améliorée
+  // Fonction pour récupérer les plats directement depuis l'API
   const fetchPlatsDirectly = async () => {
     try {
       setLoading(true)
       console.log("🔍 Récupération directe des plats depuis l'API...")
 
-      // Faire une requête directe à l'API
-      const response = await axios.get(`${API_URL}/Gerant_plat`)
+      // Ajouter un paramètre timestamp pour éviter le cache
+      const timestamp = new Date().getTime();
+      const response = await axios.get(`${API_URL}/Gerant_plat?_t=${timestamp}`)
 
       // Stocker les données brutes pour inspection
       setRawApiData(response.data)
@@ -701,7 +702,7 @@ const MenuScreen = ({ navigation }) => {
       let success = false
       let errorMessage = ""
 
-      // Méthode 1: Utiliser la fonction de l'API
+      // Méthode 1: Utiliser la fonction de l'API avec timestamp anti-cache
       try {
         await PlatsApi.deletePlat(selectedItem.id)
         console.log("✅ Suppression réussie via PlatsApi.deletePlat")
@@ -710,9 +711,10 @@ const MenuScreen = ({ navigation }) => {
         console.error("❌ Échec de la méthode 1:", error1.message)
         errorMessage = error1.message
 
-        // Méthode 2: Appel direct à l'API avec axios
+        // Méthode 2: Appel direct à l'API avec axios et timestamp anti-cache
         try {
-          const deleteUrl = `${API_URL}/Gerant_plat/${selectedItem.id}`
+          const timestamp = new Date().getTime();
+          const deleteUrl = `${API_URL}/Gerant_plat/${selectedItem.id}?_t=${timestamp}`
           console.log(`📤 URL de suppression directe: ${deleteUrl}`)
 
           const response = await axios.delete(deleteUrl)
@@ -728,7 +730,8 @@ const MenuScreen = ({ navigation }) => {
 
           // Méthode 3: Essayer avec un PATCH pour marquer comme supprimé
           try {
-            const patchUrl = `${API_URL}/Gerant_plat`
+            const timestamp = new Date().getTime();
+            const patchUrl = `${API_URL}/Gerant_plat?_t=${timestamp}`
             console.log(`📤 URL de suppression logique: ${patchUrl}`)
 
             const response = await axios.patch(patchUrl, {
@@ -755,10 +758,11 @@ const MenuScreen = ({ navigation }) => {
         setShowDeleteModal(false)
         setSelectedItem(null)
 
-        // Recharger les plats pour s'assurer que la liste est à jour
+        // Attendre 1 seconde pour s'assurer que la suppression est complète côté serveur
         setTimeout(() => {
+          // Forcer la récupération complète des plats depuis le serveur pour vérifier la suppression
           fetchPlatsDirectly()
-        }, 500)
+        }, 1000)
 
         Alert.alert("Succès", "Plat supprimé avec succès")
       } else {

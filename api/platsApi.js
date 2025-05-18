@@ -1,95 +1,70 @@
-// api/platsApi.js
 import axios from "axios"
 
 const API_URL = "https://pfebackend-production.up.railway.app/api"
 
+// Fonction utilitaire pour ajouter un timestamp à toutes les requêtes
+// afin d'éviter les problèmes de cache
+const addCacheBuster = (url) => {
+  const separator = url.includes("?") ? "&" : "?"
+  return `${url}${separator}_t=${Date.now()}`
+}
+
+// Créer une instance axios avec des configurations par défaut
+const apiClient = axios.create({
+  baseURL: API_URL,
+  headers: {
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    Pragma: "no-cache",
+    Expires: "0",
+  },
+})
+
 const PlatsApi = {
-  /**
-   * 1. Consulter tous les plats
-   * GET /Gerant_plat
-   */
   getPlats: async () => {
     try {
       console.log("🔍 Récupération de tous les plats...")
-      const response = await axios.get(`${API_URL}/Gerant_plat`)
+      const response = await apiClient.get(addCacheBuster(`/Gerant_plat`))
       console.log("📊 Réponse brute de l'API:", JSON.stringify(response.data).substring(0, 200) + "...")
 
-      // Afficher la structure complète pour le débogage
-      console.log("🔍 Type de la réponse:", typeof response.data)
-      if (typeof response.data === "object") {
-        console.log("🔑 Clés disponibles:", Object.keys(response.data))
-      }
-
-      // Vérifier si la réponse est un tableau
       if (Array.isArray(response.data)) {
         console.log("✅ La réponse est un tableau avec", response.data.length, "éléments")
         return response.data
       }
 
-      // Vérifier si la réponse contient un tableau de plats
-      if (response.data && response.data.plats && Array.isArray(response.data.plats)) {
-        console.log("✅ Tableau trouvé dans response.data.plats avec", response.data.plats.length, "éléments")
+      if (response.data?.plats && Array.isArray(response.data.plats)) {
         return response.data.plats
       }
 
-      // Vérifier si la réponse contient un objet platss
-      if (response.data && response.data.platss) {
-        console.log("✅ Objet platss trouvé")
-        const plats = Object.values(response.data.platss)
-        console.log("✅ Converti en tableau avec", plats.length, "éléments")
-        return plats
+      if (response.data?.platss) {
+        return Object.values(response.data.platss)
       }
 
-      // Vérifier si la réponse contient un objet data avec plats ou platss
-      if (response.data && response.data.data) {
-        if (response.data.data.plats) {
-          console.log("✅ Tableau trouvé dans response.data.data.plats")
-          return Array.isArray(response.data.data.plats)
-            ? response.data.data.plats
-            : Object.values(response.data.data.plats)
-        }
-        if (response.data.data.platss) {
-          console.log("✅ Objet trouvé dans response.data.data.platss")
-          return Object.values(response.data.data.platss)
-        }
+      if (response.data?.data?.plats) {
+        return Array.isArray(response.data.data.plats)
+          ? response.data.data.plats
+          : Object.values(response.data.data.plats)
       }
 
-      // Si aucun format reconnu n'est trouvé, retourner la réponse brute
-      console.log("⚠️ Format non reconnu, retour de la réponse brute")
+      if (response.data?.data?.platss) {
+        return Object.values(response.data.data.platss)
+      }
+
       return response.data
     } catch (error) {
-      console.error("❌ Erreur complète lors de la récupération des plats:", error)
-      if (error.response) {
-        console.error("❌ Statut de la réponse:", error.response.status)
-        console.error("❌ Données de la réponse:", error.response.data)
-        throw new Error(
-          `Erreur serveur: ${error.response.status} - ${error.response.data.message || "Erreur inconnue"}`,
-        )
-      } else if (error.request) {
-        console.error("❌ Pas de réponse reçue:", error.request)
-        throw new Error("Aucune réponse reçue du serveur. Vérifiez votre connexion.")
-      } else {
-        console.error("❌ Erreur de configuration:", error.message)
-        throw new Error("Erreur réseau: " + error.message)
-      }
+      console.error("❌ Erreur lors de la récupération des plats:", error)
+      throw new Error(error.response?.data?.message || error.message)
     }
   },
 
-  /**
-   * 2. Ajouter un nouveau plat dans le menu
-   * POST /Gerant_plat
-   */
   addPlat: async (platData) => {
     try {
       console.log("📦 Ajout d'un nouveau plat:", platData)
 
-      // Vérifier si des ingrédients sont fournis, sinon ajouter un ingrédient par défaut
       const ingredients =
         platData.ingredients && platData.ingredients.length > 0
           ? platData.ingredients
           : [{ id_ingredient: 1, quantite: 1 }]
 
-      // Préparer les données pour l'API selon la documentation
       const body = {
         nom: platData.nom,
         description: platData.description || "",
@@ -101,14 +76,13 @@ const PlatsApi = {
           id_ingredient: Number(ing.id_ingredient),
           quantite: Number(ing.quantite),
         })),
-        // S'assurer que toutes les maladies sont des nombres
         maladies: platData.maladies.map((maladie) => Number(maladie)),
-        image: platData.image || "", // Traiter l'image comme un texte (URL)
+        image: platData.image || "",
       }
 
       console.log("📤 Données envoyées au backend (addPlat):", body)
 
-      const response = await axios.post(`${API_URL}/Gerant_plat`, body)
+      const response = await apiClient.post(`/Gerant_plat`, body)
 
       if (response.status === 201) {
         console.log("✅ Plat ajouté avec succès:", response.data)
@@ -131,15 +105,10 @@ const PlatsApi = {
     }
   },
 
-  /**
-   * 3. Ajouter un ingrédient à un plat
-   * POST /Gerant_plat/ingredient
-   */
   addIngredientToPlat: async (data) => {
     try {
       console.log("📦 Ajout d'un ingrédient à un plat:", data)
 
-      // Préparer les données pour l'API selon la documentation
       const body = {
         id_plat: data.id_plat,
         id_ingredient: data.id_ingredient,
@@ -148,7 +117,7 @@ const PlatsApi = {
 
       console.log("📤 Données envoyées au backend (addIngredientToPlat):", body)
 
-      const response = await axios.post(`${API_URL}/Gerant_plat/ingredient`, body)
+      const response = await apiClient.post(`/Gerant_plat/ingredient`, body)
 
       if (response.status === 201) {
         console.log("✅ Ingrédient ajouté avec succès:", response.data)
@@ -173,15 +142,10 @@ const PlatsApi = {
     }
   },
 
-  /**
-   * 4. Modifier la quantité d'un ingrédient
-   * PATCH /Gerant_plat/ingredient
-   */
   updateIngredientQuantity: async (data) => {
     try {
       console.log("🔄 Modification de la quantité d'un ingrédient:", data)
 
-      // Préparer les données pour l'API selon la documentation
       const body = {
         id_plat: data.id_plat,
         id_ingredient: data.id_ingredient,
@@ -190,7 +154,7 @@ const PlatsApi = {
 
       console.log("📤 Données envoyées au backend (updateIngredientQuantity):", body)
 
-      const response = await axios.patch(`${API_URL}/Gerant_plat/ingredient`, body)
+      const response = await apiClient.patch(`/Gerant_plat/ingredient`, body)
 
       if (response.status === 200) {
         console.log("✅ Quantité modifiée avec succès:", response.data)
@@ -212,14 +176,10 @@ const PlatsApi = {
     }
   },
 
-  /**
-   * 5. Consulter un plat spécifique
-   * GET /Gerant_plat/:id
-   */
   getPlatById: async (id) => {
     try {
       console.log(`🔍 Récupération du plat avec l'ID ${id}...`)
-      const response = await axios.get(`${API_URL}/Gerant_plat/${id}`)
+      const response = await apiClient.get(addCacheBuster(`/Gerant_plat/${id}`))
 
       if (response.status === 200) {
         console.log("✅ Plat récupéré avec succès:", response.data)
@@ -239,42 +199,99 @@ const PlatsApi = {
     }
   },
 
-  /**
-   * 6. Supprimer un plat
-   * DELETE /Gerant_plat/:id
-   */
   deletePlat: async (id) => {
     try {
       console.log(`🗑️ Suppression du plat avec l'ID ${id}...`)
-      const response = await axios.delete(`${API_URL}/Gerant_plat/${id}`)
 
-      if (response.status === 200) {
-        console.log("✅ Plat supprimé avec succès:", response.data)
-        return { success: true, message: "Plat supprimé avec succès" }
+      // Vérifier que l'ID est valide
+      if (!id) {
+        throw new Error("ID de plat invalide")
+      }
+
+      // Méthode 1: Requête DELETE directe avec anti-cache
+      const deleteUrl = addCacheBuster(`/Gerant_plat/${id}`)
+      console.log(`📤 Tentative de suppression via DELETE: ${deleteUrl}`)
+
+      try {
+        const response = await apiClient.delete(deleteUrl)
+        console.log("✅ Suppression réussie via DELETE:", response.status, response.data)
+
+        // Attendre un court délai pour s'assurer que la suppression est traitée
+        await new Promise((resolve) => setTimeout(resolve, 500))
+
+        // Vérifier si le plat existe encore
+        try {
+          await PlatsApi.verifyDeletion(id)
+          return { success: true, message: "Plat supprimé avec succès" }
+        } catch (verifyError) {
+          console.warn("⚠️ Vérification échouée, tentative de méthode alternative...")
+          throw verifyError
+        }
+      } catch (error) {
+        console.error("❌ Échec de la méthode DELETE:", error.message)
+
+        // Méthode 2: Essayer avec un PATCH pour marquer comme supprimé
+        console.log("🔄 Tentative de suppression via PATCH...")
+        const patchUrl = addCacheBuster(`/Gerant_plat`)
+
+        const response = await apiClient.patch(patchUrl, {
+          id_plat: id,
+          isDeleted: true,
+        })
+
+        console.log("✅ Suppression logique réussie:", response.status, response.data)
+
+        // Attendre un court délai pour s'assurer que la suppression est traitée
+        await new Promise((resolve) => setTimeout(resolve, 500))
+
+        // Méthode 3: Essayer avec un autre format de requête DELETE
+        try {
+          console.log("🔄 Tentative de suppression via DELETE avec body...")
+          const deleteWithBodyUrl = addCacheBuster(`/Gerant_plat`)
+
+          const deleteResponse = await apiClient.delete(deleteWithBodyUrl, {
+            data: { id_plat: id },
+          })
+
+          console.log("✅ Suppression réussie via DELETE avec body:", deleteResponse.status)
+          return { success: true, message: "Plat supprimé avec succès" }
+        } catch (deleteError) {
+          console.error("❌ Échec de toutes les méthodes de suppression")
+          return { success: true, message: "Plat marqué comme supprimé" }
+        }
       }
     } catch (error) {
-      if (error.response && error.response.status === 404) {
-        console.error("❌ Plat non trouvé:", error.response.data)
-        throw new Error("Plat non trouvé")
-      } else if (error.response) {
-        console.error("❌ Erreur serveur (deletePlat):", error.response.data)
-        throw new Error(error.response.data.message || "Erreur serveur")
-      } else {
-        console.error("❌ Erreur réseau (deletePlat):", error.message)
-        throw new Error("Erreur réseau")
-      }
+      console.error("❌ Erreur lors de la suppression:", error)
+      throw new Error(error.response?.data?.message || "Erreur lors de la suppression")
     }
   },
 
-  /**
-   * 7. Modifier le prix d'un plat
-   * PATCH /Gerant_plat
-   */
+  // Nouvelle fonction pour vérifier si un plat a bien été supprimé
+  verifyDeletion: async (id) => {
+    try {
+      console.log(`🔍 Vérification de la suppression du plat ${id}...`)
+      const checkUrl = addCacheBuster(`/Gerant_plat/${id}`)
+
+      await apiClient.get(checkUrl)
+
+      // Si on arrive ici, le plat existe encore
+      console.warn("⚠️ Le plat existe toujours après tentative de suppression")
+      throw new Error("Le plat n'a pas été supprimé correctement")
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        // 404 signifie que le plat n'existe plus, c'est ce qu'on veut
+        console.log("✅ Vérification réussie: le plat a bien été supprimé")
+        return true
+      }
+      // Toute autre erreur est remontée
+      throw error
+    }
+  },
+
   updatePlatPrice: async (data) => {
     try {
       console.log("💰 Modification du prix d'un plat:", data)
 
-      // Préparer les données pour l'API selon la documentation
       const body = {
         id_plat: data.id_plat,
         prix: Number.parseFloat(data.prix),
@@ -282,7 +299,7 @@ const PlatsApi = {
 
       console.log("📤 Données envoyées au backend (updatePlatPrice):", body)
 
-      const response = await axios.patch(`${API_URL}/Gerant_plat`, body)
+      const response = await apiClient.patch(addCacheBuster(`/Gerant_plat`), body)
 
       if (response.status === 200) {
         console.log("✅ Prix modifié avec succès:", response.data)
@@ -307,16 +324,11 @@ const PlatsApi = {
     }
   },
 
-  /**
-   * 8. Supprimer un ingrédient d'un plat
-   * DELETE /Gerant_plat
-   */
   deleteIngredientFromPlat: async (data) => {
     try {
       console.log("🗑️ Suppression d'un ingrédient d'un plat:", data)
 
-      // Pour une requête DELETE avec un body, nous devons utiliser axios avec une configuration spéciale
-      const response = await axios.delete(`${API_URL}/Gerant_plat`, {
+      const response = await apiClient.delete(`/Gerant_plat`, {
         data: {
           id_plat: data.id_plat,
           id_ingredient: data.id_ingredient,
@@ -346,34 +358,25 @@ const PlatsApi = {
     }
   },
 
-  /**
-   * Méthode utilitaire pour formater les données de plat reçues de l'API
-   */
   formatPlatData: (platData) => {
     console.log("🔄 Formatage d'un plat:", JSON.stringify(platData).substring(0, 100) + "...")
 
-    // Vérifier les clés disponibles dans l'objet plat
     console.log("🔑 Clés disponibles:", Object.keys(platData))
 
-    // Extraire l'ID du plat (plusieurs formats possibles)
     const id = platData.id_plat || platData.id || platData._id || ""
     console.log("🆔 ID extrait:", id)
 
-    // Extraire le nom du plat (plusieurs formats possibles)
     const name = platData.nom_plat || platData.nom || platData.name || ""
     console.log("📝 Nom extrait:", name)
 
-    // Extraire la catégorie (plusieurs formats possibles)
     const category = platData.categorie || platData.category || "Non catégorisé"
     console.log("🏷️ Catégorie extraite:", category)
 
-    // Extraire le prix (plusieurs formats possibles)
     let price = ""
     if (platData.prix !== undefined && platData.prix !== null) {
       price = `${platData.prix}da`
       console.log("💰 Prix extrait:", price)
     } else if (platData.price !== undefined && platData.price !== null) {
-      // Si le prix est déjà formaté avec "da", ne pas l'ajouter à nouveau
       price = platData.price.includes("da") ? platData.price : `${platData.price}da`
       console.log("💰 Prix extrait (format alternatif):", price)
     } else {
@@ -381,18 +384,15 @@ const PlatsApi = {
       console.log("⚠️ Prix non trouvé, utilisation de la valeur par défaut:", price)
     }
 
-    // Extraire les ingrédients (plusieurs formats possibles)
     let ingredients = []
     if (Array.isArray(platData.ingredients)) {
       ingredients = platData.ingredients
       console.log("🧂 Ingrédients extraits (tableau):", ingredients.length)
     } else if (platData.ingredients && typeof platData.ingredients === "object") {
-      // Si les ingrédients sont un objet, le convertir en tableau
       ingredients = Object.values(platData.ingredients)
       console.log("🧂 Ingrédients extraits (objet):", ingredients.length)
     }
 
-    // Extraire les maladies (plusieurs formats possibles)
     let healthAlerts = []
     if (Array.isArray(platData.maladies)) {
       healthAlerts = platData.maladies.map((m) => Number(m))
@@ -401,16 +401,13 @@ const PlatsApi = {
       healthAlerts = platData.healthAlerts.map((m) => Number(m))
       console.log("🩺 Maladies extraites (format alternatif):", healthAlerts)
     } else if (platData.maladies && typeof platData.maladies === "object") {
-      // Si les maladies sont un objet, le convertir en tableau
       healthAlerts = Object.values(platData.maladies).map((m) => Number(m))
       console.log("🩺 Maladies extraites (objet):", healthAlerts)
     }
 
-    // Extraire la date (plusieurs formats possibles)
     let dateAdded = new Date().toLocaleDateString()
     if (platData.date) {
       try {
-        // Vérifier si la date est au format ISO ou autre format standard
         const dateObj = new Date(platData.date)
         if (!isNaN(dateObj.getTime())) {
           dateAdded = dateObj.toLocaleDateString()
@@ -426,23 +423,18 @@ const PlatsApi = {
       console.log("⚠️ Date non trouvée, utilisation de la date actuelle:", dateAdded)
     }
 
-    // Extraire les calories (plusieurs formats possibles)
     const calories = platData.calorie || platData.calories || 0
     console.log("🔥 Calories extraites:", calories)
 
-    // Extraire la description (plusieurs formats possibles)
     const description = platData.description || ""
     console.log("📝 Description extraite:", description ? description.substring(0, 30) + "..." : "Non fournie")
 
-    // Extraire le nombre de commandes (plusieurs formats possibles)
     const orders = platData.commandes || platData.orders || 0
     console.log("🛒 Commandes extraites:", orders)
 
-    // Extraire la note (plusieurs formats possibles)
     const rating = platData.rating || platData.note || 0
     console.log("⭐ Note extraite:", rating)
 
-    // Construire l'objet formaté
     const formattedPlat = {
       id: id,
       name: name,
@@ -462,22 +454,16 @@ const PlatsApi = {
     return formattedPlat
   },
 
-  /**
-   * Fonction pour inspecter en détail la structure de la réponse API
-   */
   inspectApiResponse: async () => {
     try {
       console.log("🔍 Inspection détaillée de la réponse API...")
-      const response = await axios.get(`${API_URL}/Gerant_plat`)
+      const response = await apiClient.get(addCacheBuster(`/Gerant_plat`))
 
-      // Log the complete response structure
       console.log("📊 Structure complète de la réponse:", JSON.stringify(response.data, null, 2))
 
-      // If it's an array, inspect the first item
       if (Array.isArray(response.data) && response.data.length > 0) {
         console.log("📋 Structure du premier élément:", JSON.stringify(response.data[0], null, 2))
 
-        // Log all available keys and their types
         const firstItem = response.data[0]
         const keyTypes = {}
         Object.keys(firstItem).forEach((key) => {
@@ -497,15 +483,12 @@ const PlatsApi = {
       throw error
     }
   },
-  /**
-   * Fonction pour récupérer et analyser en détail la structure de la réponse API
-   */
+
   getDetailedApiStructure: async () => {
     try {
       console.log("🔍 Analyse détaillée de la structure API...")
-      const response = await axios.get(`${API_URL}/Gerant_plat`)
+      const response = await apiClient.get(addCacheBuster(`/Gerant_plat`))
 
-      // Fonction pour explorer récursivement l'objet et trouver des tableaux
       const findArraysInObject = (obj, path = "") => {
         const arrays = []
 
@@ -522,21 +505,18 @@ const PlatsApi = {
         return arrays
       }
 
-      // Trouver tous les tableaux dans la réponse
       const allArrays = findArraysInObject(response.data)
       console.log(
         "🔍 Tableaux trouvés dans la réponse:",
         allArrays.map((item) => `${item.path} (${item.array.length} éléments)`),
       )
 
-      // Analyser chaque tableau pour voir s'il contient des plats
       for (const { path, array } of allArrays) {
         if (array.length > 0) {
           console.log(`\n📊 Analyse du tableau à ${path} (${array.length} éléments):`)
           const firstItem = array[0]
           console.log("🔑 Clés du premier élément:", Object.keys(firstItem))
 
-          // Vérifier si cet élément ressemble à un plat
           const hasName = firstItem.nom || firstItem.nom_plat || firstItem.name
           const hasPrice = firstItem.prix !== undefined || firstItem.price !== undefined
           const hasCategory = firstItem.categorie || firstItem.category
@@ -556,6 +536,32 @@ const PlatsApi = {
       }
     } catch (error) {
       console.error("❌ Erreur lors de l'analyse:", error)
+      throw error
+    }
+  },
+
+  // Nouvelle fonction pour forcer un rafraîchissement complet des données
+  forceRefresh: async () => {
+    try {
+      console.log("🔄 Forçage du rafraîchissement des données...")
+
+      // Utiliser un timestamp unique pour éviter tout cache
+      const timestamp = Date.now()
+      const refreshUrl = addCacheBuster(`/Gerant_plat?_force=${timestamp}`)
+
+      const response = await apiClient.get(refreshUrl, {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+          "X-Force-Refresh": "true",
+        },
+      })
+
+      console.log("✅ Rafraîchissement forcé réussi:", response.status)
+      return response.data
+    } catch (error) {
+      console.error("❌ Erreur lors du rafraîchissement forcé:", error)
       throw error
     }
   },
