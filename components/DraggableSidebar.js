@@ -1,80 +1,86 @@
+"use client"
 
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  PanResponder,
-  Animated,
-} from 'react-native';
-import { Feather } from '@expo/vector-icons';
-import { useSidebar } from '../context/SidebarContext';
+// components/DraggableSidebar.js
+import { useState } from "react"
+import { View, Text, StyleSheet, TouchableOpacity, PanResponder, Animated } from "react-native"
+import { Feather } from "@expo/vector-icons"
+import { useSidebar } from "../context/SidebarContext"
 
 const DraggableSidebar = ({ navigation, currentScreen }) => {
-  const { sidebarWidth, setSidebarWidth } = useSidebar();
-  const [pan] = useState(new Animated.Value(0));
+  const { sidebarWidth, setSidebarWidth } = useSidebar()
+  const [pan] = useState(new Animated.Value(0))
 
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onPanResponderMove: (_, gestureState) => {
-      pan.setValue(gestureState.dx);
+      pan.setValue(gestureState.dx)
     },
     onPanResponderRelease: (_, gestureState) => {
-      const newWidth = Math.max(70, Math.min(300, sidebarWidth + gestureState.dx));
-      setSidebarWidth(newWidth);
-      pan.setValue(0);
+      const newWidth = Math.max(70, Math.min(300, sidebarWidth + gestureState.dx))
+      setSidebarWidth(newWidth)
+      pan.setValue(0)
     },
-  });
+  })
 
   const navigateTo = (screen) => {
-    navigation.navigate(screen);
-  };
+    // Ajouter un console.log pour déboguer la navigation
+    console.log("🔄 Navigation vers:", screen)
+
+    // Vérifier si la navigation est définie
+    if (!navigation) {
+      console.error("❌ Erreur: l'objet navigation n'est pas défini")
+      return
+    }
+
+    // Vérifier si la méthode navigate existe
+    if (typeof navigation.navigate !== "function") {
+      console.error("❌ Erreur: navigation.navigate n'est pas une fonction", navigation)
+      return
+    }
+
+    // Tenter la navigation avec try/catch pour capturer les erreurs
+    try {
+      navigation.navigate(screen)
+      console.log("✅ Navigation réussie vers:", screen)
+    } catch (error) {
+      console.error("❌ Erreur lors de la navigation:", error)
+    }
+  }
 
   const renderNavItem = (icon, label, screen) => {
-    const isActive = currentScreen === screen;
-    
+    const isActive = currentScreen === screen
+
     return (
-      <TouchableOpacity
-        style={[styles.navItem, isActive && styles.activeNavItem]}
-        onPress={() => navigateTo(screen)}
-      >
-        <Feather name={icon} size={20} color={isActive ? '#fff' : '#0f172a'} />
+      <TouchableOpacity style={[styles.navItem, isActive && styles.activeNavItem]} onPress={() => navigateTo(screen)}>
+        <Feather name={icon} size={20} color={isActive ? "#fff" : "#0f172a"} />
         <Text style={[styles.navText, isActive && styles.activeNavText]}>{label}</Text>
       </TouchableOpacity>
-    );
-  };
+    )
+  }
 
   return (
     <View style={[styles.sidebar, { width: sidebarWidth }]}>
       <View style={styles.sidebarHeader}>
         <Text style={styles.sidebarTitle}>My Account</Text>
       </View>
-      
+
       <View style={styles.navContainer}>
-        {renderNavItem('menu', 'Menu', 'Menu')}
-        {renderNavItem('alert-circle', 'Health alerts', 'HealthAlerts')}
-        {renderNavItem('package', 'Stock', 'Stock')}
-        {renderNavItem('tag', 'Promotions', 'Promotions')}
-        {renderNavItem('users', 'Staff', 'Staff')}
+        {renderNavItem("menu", "Menu", "Menu")}
+        {renderNavItem("alert-circle", "Health alerts", "HealthAlerts")}
+        {renderNavItem("package", "Stock", "Stock")}
+        {renderNavItem("tag", "Promotions", "Promotions")}
+        {renderNavItem("users", "Staff", "Staff")}
+        {renderNavItem("calendar", "Reservations", "Reservations")}
       </View>
-      
-      <View style={styles.sidebarFooter}>
-        {renderNavItem('log-out', 'Log out', 'Logout')}
-      </View>
-      
-      <Animated.View
-        style={[
-          styles.dragger,
-          { transform: [{ translateX: pan }] }
-        ]}
-        {...panResponder.panHandlers}
-      >
+
+      <View style={styles.sidebarFooter}>{renderNavItem("log-out", "Log out", "Logout")}</View>
+
+      <Animated.View style={[styles.dragger, { transform: [{ translateX: pan }] }]} {...panResponder.panHandlers}>
         <View style={styles.draggerHandle} />
       </Animated.View>
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   sidebar: {
@@ -143,4 +149,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default DraggableSidebar;
+export default DraggableSidebar

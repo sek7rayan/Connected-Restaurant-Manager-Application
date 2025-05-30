@@ -6,17 +6,8 @@ import { useSidebar } from '../context/SidebarContext';
 
 const SIDEBAR_WIDTH = 250;
 
-const Sidebar = () => {
+const Sidebar = ({ navigation }) => {
   const { sidebarOpen } = useSidebar();
-  <TouchableOpacity 
-  style={styles.menuItem} 
-  onPress={() => navigation.navigate('Menu')}
->
-  <Feather name="menu" size={24} color="#0f172a" />
-  <Animated.Text style={[styles.menuText, { opacity: textOpacity }]}>
-    Menu
-  </Animated.Text>
-</TouchableOpacity>
   
   return (
     <Animated.View 
@@ -32,33 +23,69 @@ const Sidebar = () => {
         <Text style={styles.sidebarTitle}>My Account</Text>
       </View>
       <ScrollView style={styles.menuContainer}>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => navigation && navigation.navigate('Dashboard')}
+        >
           <Feather name="user" size={20} color="#0f172a" />
           <Text style={styles.menuText}>Dashboard</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
+        
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => navigation && navigation.navigate('Menu')}
+        >
           <Feather name="menu" size={20} color="#0f172a" />
           <Text style={styles.menuText}>Menu</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
+        
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => navigation && navigation.navigate('HealthAlerts')}
+        >
           <Feather name="alert-circle" size={20} color="#0f172a" />
           <Text style={styles.menuText}>Health alerts</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.menuItem, styles.activeMenuItem]}>
+        
+        <TouchableOpacity 
+          style={[styles.menuItem, styles.activeMenuItem]}
+          onPress={() => navigation && navigation.navigate('Stock')}
+        >
           <MaterialIcons name="inventory" size={20} color="#0f172a" />
           <Text style={[styles.menuText, styles.activeMenuText]}>Stock</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
+        
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => navigation && navigation.navigate('Promotions')}
+        >
           <Feather name="tag" size={20} color="#0f172a" />
           <Text style={styles.menuText}>Promotions</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
+        
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => navigation && navigation.navigate('Staff')}
+        >
           <Feather name="users" size={20} color="#0f172a" />
           <Text style={styles.menuText}>Staff</Text>
           <Feather name="chevron-right" size={20} color="#0f172a" style={styles.menuArrow} />
         </TouchableOpacity>
+        
+        {/* Add Reservations menu item */}
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => navigation && navigation.navigate('Reservations')}
+        >
+          <Feather name="calendar" size={20} color="#0f172a" />
+          <Text style={styles.menuText}>Reservations</Text>
+        </TouchableOpacity>
       </ScrollView>
-      <TouchableOpacity style={styles.logoutButton}>
+      
+      <TouchableOpacity 
+        style={styles.logoutButton}
+        onPress={() => navigation && navigation.navigate('Logout')}
+      >
         <Feather name="log-out" size={20} color="#0f172a" />
         <Text style={styles.logoutText}>Log out</Text>
       </TouchableOpacity>
